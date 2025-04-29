@@ -1,0 +1,109 @@
+﻿@page "/city/index"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+
+<h4>
+    Danh sách City
+</h4>
+
+@if (listCities == null)
+{
+    <h5>Loading...</h5>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên</th>
+                <th></th>              
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var city in listCities)
+            {
+                <tr>
+                    <td>@city.Name</td>
+                    <td>
+                        <button @onclick="@(() => Details(city.Id))">Chi tiết</button>
+                        <button @onclick="@(() => Delete(city.Id))">Xóa</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    
+}
+<NavLink class="nav-link" href="city/create">Thêm mới</NavLink>
+<p>Tên</p>
+<input @bind=city.Name>
+
+<span>@errorMessage</span>
+<button @onclick="@(() => Update())">Sửa</button>
+<span>@errorFileMessage</span>
+
+
+@code {
+    List<City> listCities = null;
+    City city = new();
+    string errorMessage = string.Empty;
+    string errorFileMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    // Task SetName(ChangeEventArgs e)
+    // {
+    //     city.Name = e.Value.ToString();
+
+    //     return Task.CompletedTask;
+    // }
+
+    async Task LoadData()
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+
+        listCities = response;
+
+        errorMessage = string.Empty;
+        errorFileMessage = string.Empty;
+    }
+
+    async Task Delete(Guid id)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.DeleteAsync($"https://localhost:7219/api/Cities/{id}");
+
+        await LoadData();
+    }
+
+
+    async Task Details(Guid id)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetFromJsonAsync<City>($"https://localhost:7219/api/Cities/{id}");
+
+        city = response;
+    }
+
+    async Task Update()
+    {
+        if (string.IsNullOrWhiteSpace(city.Name))
+        {
+            errorMessage = "Tên không được rỗng hoặc chứa toàn khoảng trắng";
+        }
+        else
+        {
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PutAsJsonAsync<City>("https://localhost:7219/api/Cities", city);
+
+            await LoadData();
+
+        }
+    }
+}

@@ -1,0 +1,48 @@
+﻿@page "/city/create"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+
+<h4>
+    Thêm mới City
+</h4>
+<p>Tên</p>
+<input @bind=city.Name>
+
+<span>@errorMessage</span>
+<button @onclick="@(() => Add())">Thêm</button>
+<span>@errorFileMessage</span>
+
+<NavLink class="nav-link" href="city/index">Danh sách</NavLink>
+
+@code {
+    List<City> listCities = null;
+    City city = new();
+    string errorMessage = string.Empty;
+    string errorFileMessage = string.Empty;
+
+    Task SetName(ChangeEventArgs e)
+    {
+        city.Name = e.Value.ToString();
+
+        return Task.CompletedTask;
+    }
+
+    async Task Add()
+    {
+        if (string.IsNullOrWhiteSpace(city.Name))
+        {
+            errorMessage = "Tên không được rỗng hoặc chứa toàn khoảng trắng";
+        }
+        else
+        {
+            city.Id = Guid.NewGuid();
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync<City>("https://localhost:7219/api/Cities", city);
+
+            //await LoadData();
+            
+        }
+    }
+
+    
+}
