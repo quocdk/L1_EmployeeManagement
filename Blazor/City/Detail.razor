@@ -1,4 +1,4 @@
-﻿@page "/city/create"
+﻿@page "/city/detail/{id}"
 @using DAL.Models
 @inject IHttpClientFactory _httpClientFactory
 @inject NavigationManager NavigationManager
@@ -6,7 +6,7 @@
 <NavLink class="nav-link" href="city/index">◀ Danh sách Tỉnh / Thành phố</NavLink>
 <hr />
 <h5>
-    Thêm mới Tỉnh / Thành phố
+    Chi tiết Tỉnh / Thành phố
 </h5>
 <br />
 <div class="mb-3 row">
@@ -17,16 +17,29 @@
     <span>@errorMessage</span>
 </div>
 <hr />
-<button class="btn btn-success" @onclick="@(() => Add())">Thêm</button>
-<span>@message</span>
+<button class="btn btn-success" @onclick="@(() => Update())">Sửa</button>
 
 
 @code {
+    [Parameter]
+    public string id { set; get; }
+
     City city = new();
     string errorMessage = string.Empty;
-    string message = string.Empty;
 
-    async Task Add()
+    protected override async Task OnInitializedAsync()
+    {
+        await Details(Guid.Parse(id));
+    }
+
+    async Task Details(Guid id)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetFromJsonAsync<City>($"https://localhost:7219/api/Cities/{id}");
+
+        city = response;
+    }
+    async Task Update()
     {
         if (string.IsNullOrWhiteSpace(city.Name))
         {
@@ -34,17 +47,11 @@
         }
         else
         {
-            city.Id = Guid.NewGuid();
             var client = _httpClientFactory.CreateClient();
-            var response = await client.PostAsJsonAsync<City>("https://localhost:7219/api/Cities", city);
-
-            errorMessage = string.Empty;
-            message = "Thêm thành công";
+            var response = await client.PutAsJsonAsync<City>("https://localhost:7219/api/Cities", city);
 
             NavigationManager.NavigateTo("/city/index");
 
         }
     }
-
-    
 }
