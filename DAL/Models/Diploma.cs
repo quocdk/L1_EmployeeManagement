@@ -15,7 +15,7 @@ namespace DAL.Models
         public Guid CityId { get; set; } 
         public Guid EmployeeId { get; set; } 
 
-        public virtual Employee Employee { get; set; }
-        public virtual City City { get; set; }
+        public virtual Employee? Employee { get; set; }
+        public virtual City? City { get; set; }
     }
 }

@@ -1,0 +1,87 @@
+﻿@page "/commune/create"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+@inject NavigationManager NavigationManager
+
+<NavLink class="nav-link" href="commune/index">◀ Danh sách Xã / Phường</NavLink>
+<hr />
+<h5>
+    Thêm mới Xã / Phường
+</h5>
+<br />
+<div class="mb-3 row">
+    <label class="col-sm-1 col-form-label">Tên: </label>
+    <div class="col-sm-3">
+        <input class="form-control" @bind=commune.Name>
+    </div>
+    <span>@errorMessage</span>
+</div>
+<div class="mb-3 row">
+    <label class="col-sm-1 col-form-label">Quận / Huyện: </label>
+    <div class="col-sm-3">
+        <select class="form-select" @bind=commune.DistrictId aria-label="Default select example">
+            <option selected>Open this select menu</option>
+            @if (listDistricts == null)
+            {
+                <option value="1">1</option>
+            }
+            else
+            {
+                @foreach (var district in listDistricts)
+                {
+                    <option value="@district.Id">@district.Name</option>
+                }
+            }          
+        </select>
+    </div>
+    <span>@errorMessage</span>
+</div>
+<hr />
+<button class="btn btn-success" @onclick="@(() => Add())">Thêm</button>
+<span>@message</span>
+
+
+@code {
+    List<District> listDistricts = null;
+    District district = new();
+    Commune commune = new();
+    string errorMessage = string.Empty;
+    string message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
+
+        listDistricts = response;
+    }
+
+    async Task Add()
+    {
+        if (string.IsNullOrWhiteSpace(commune.Name))
+        {
+            errorMessage = "Tên không được rỗng hoặc chứa toàn khoảng trắng";
+        }
+        else
+        {
+            commune.Id = Guid.NewGuid();
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync<Commune>("https://localhost:7219/api/Communes", commune);
+
+            errorMessage = string.Empty;
+            message = "Thêm thành công";
+
+            NavigationManager.NavigateTo("/commune/index");
+
+        }
+    }
+
+
+}

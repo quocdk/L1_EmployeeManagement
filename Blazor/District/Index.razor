@@ -1,0 +1,123 @@
+﻿@page "/district/index"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+
+<h4>
+    Danh sách Huyện / Quận
+</h4>
+<a class="btn btn-primary" href="district/create">Thêm mới</a>
+<button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
+<hr />
+<div class="mb-3 row">
+    <div class="col-sm-4">
+        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=district.Id>
+    </div>
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(district.Id))">Tìm kiếm</button>
+    @*<span>@errorMessage</span>*@
+</div>
+
+<br />
+@if (listDistricts == null)
+{
+    <div class="spinner-border m-5" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên</th>
+                <th>Tỉnh / Thành phố</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var district in listDistrictJoinCity)
+            {
+                <tr>
+                    @* <td>@(listCities.IndexOf(city) +1)</td> *@
+                    <td>@district.Name</td>
+                    <td>@district.CityName</td>
+                    <td>
+                        <a class="btn btn-info" href="/district/detail/@district.Id">Chi tiết</a>
+                        <button class="btn btn-danger" @onclick="@(() => Delete(district.Id))">Xóa</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+<span>@errorMessage</span>
+
+
+@code {
+    List<City> listCities = null;
+    City city = new();
+    List<District> listDistricts = null;
+    District district = new();
+    public class DistrictJoinCity
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string CityName { get; set; }
+    }
+    List<DistrictJoinCity> listDistrictJoinCity = null;
+    string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+
+        var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
+        listDistricts = responseDistrict;
+
+        var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+        listCities = responseCity;
+
+        listDistrictJoinCity = (from district in listDistricts
+                                join city in listCities on district.CityId equals city.Id
+                                select new DistrictJoinCity
+                                {
+                                    Id = district.Id,
+                                    Name = district.Name,
+                                    CityName = city.Name
+                                }).ToList();
+        
+
+        errorMessage = string.Empty;
+    }
+
+    async Task Delete(Guid id)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.DeleteAsync($"https://localhost:7219/api/Districts/{id}");
+
+        await LoadData();
+    }
+
+    async Task Search(Guid id)
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetFromJsonAsync<District>($"https://localhost:7219/api/Districts/{id}");
+
+        listDistricts.Clear();
+        listDistricts.Add(response);
+    }
+
+
+    
+
+    
+}

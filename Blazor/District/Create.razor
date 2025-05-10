@@ -1,0 +1,87 @@
+﻿@page "/district/create"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+@inject NavigationManager NavigationManager
+
+<NavLink class="nav-link" href="district/index">◀ Danh sách Huyện / Quận</NavLink>
+<hr />
+<h5>
+    Thêm mới Huyện / Quận
+</h5>
+<br />
+<div class="mb-3 row">
+    <label class="col-sm-1 col-form-label">Tên: </label>
+    <div class="col-sm-3">
+        <input class="form-control" @bind=district.Name>
+    </div>
+    <span>@errorMessage</span>
+</div>
+<div class="mb-3 row">
+    <label class="col-sm-1 col-form-label">Tỉnh / Thành phố: </label>
+    <div class="col-sm-3">
+        <select class="form-select" @bind=district.CityId aria-label="Default select example">
+            <option selected>Open this select menu</option>
+            @if (listCities == null)
+            {
+                <option value="1">1</option>
+            }
+            else
+            {
+                @foreach (var city in listCities)
+                {
+                    <option value="@city.Id">@city.Name</option>
+                }
+            }          
+        </select>
+    </div>
+    <span>@errorMessage</span>
+</div>
+<hr />
+<button class="btn btn-success" @onclick="@(() => Add())">Thêm</button>
+<span>@message</span>
+
+
+@code {
+    List<City> listCities = null;
+    City city = new();
+    District district = new();
+    string errorMessage = string.Empty;
+    string message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+
+        listCities = response;
+    }
+
+    async Task Add()
+    {
+        if (string.IsNullOrWhiteSpace(district.Name))
+        {
+            errorMessage = "Tên không được rỗng hoặc chứa toàn khoảng trắng";
+        }
+        else
+        {
+            district.Id = Guid.NewGuid();
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync<District>("https://localhost:7219/api/Districts", district);
+
+            errorMessage = string.Empty;
+            message = "Thêm thành công";
+
+            NavigationManager.NavigateTo("/district/index");
+
+        }
+    }
+
+
+}

@@ -58,6 +58,11 @@ namespace DAL.Repositories.Implements
             var obj = _dbContext.Cities.FirstOrDefault(o => o.Id == idCity);
             return obj;
         }
+        public City GetByName(string nameCity)
+        {
+            var obj = _dbContext.Cities.FirstOrDefault(o => o.Name == nameCity);
+            return obj;
+        }
 
         public List<City> GetList()
         {

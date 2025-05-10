@@ -1,0 +1,50 @@
+﻿@page "/ethnic/create"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+@inject NavigationManager NavigationManager
+
+<NavLink class="nav-link" href="ethnic/index">◀ Danh sách Dân tộc</NavLink>
+<hr />
+<h5>
+    Thêm mới Dân tộc
+</h5>
+<br />
+<div class="mb-3 row">
+    <label class="col-sm-1 col-form-label">Tên: </label>
+    <div class="col-sm-3">
+        <input class="form-control" @bind=ethnic.Name>
+    </div>
+    <span>@errorMessage</span>
+</div>
+<hr />
+<button class="btn btn-success" @onclick="@(() => Add())">Thêm</button>
+<span>@message</span>
+
+
+@code {
+    Ethnic ethnic = new();
+    string errorMessage = string.Empty;
+    string message = string.Empty;
+
+    async Task Add()
+    {
+        if (string.IsNullOrWhiteSpace(ethnic.Name))
+        {
+            errorMessage = "Tên không được rỗng hoặc chứa toàn khoảng trắng";
+        }
+        else
+        {
+            ethnic.Id = Guid.NewGuid();
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync<Ethnic>("https://localhost:7219/api/Ethnics", ethnic);
+
+            errorMessage = string.Empty;
+            message = "Thêm thành công";
+
+            NavigationManager.NavigateTo("/ethnic/index");
+
+        }
+    }
+
+
+}

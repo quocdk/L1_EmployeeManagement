@@ -1,0 +1,123 @@
+﻿@page "/commune/index"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+
+<h4>
+    Danh sách Xã / Phường
+</h4>
+<a class="btn btn-primary" href="commune/create">Thêm mới</a>
+<button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
+<hr />
+<div class="mb-3 row">
+    <div class="col-sm-4">
+        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=commune.Id>
+    </div>
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(commune.Id))">Tìm kiếm</button>
+    @*<span>@errorMessage</span>*@
+</div>
+
+<br />
+@if (listCommuneJoinDistrict == null)
+{
+    <div class="spinner-border m-5" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên</th>
+                <th>Quận / Huyện</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var commune in listCommuneJoinDistrict)
+            {
+                <tr>
+                    @* <td>@(listCities.IndexOf(city) +1)</td> *@
+                    <td>@commune.Name</td>
+                    <td>@commune.DistrictName</td>
+                    <td>
+                        <a class="btn btn-info" href="/commune/detail/@commune.Id">Chi tiết</a>
+                        <button class="btn btn-danger" @onclick="@(() => Delete(commune.Id))">Xóa</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+<span>@errorMessage</span>
+
+
+@code {
+    List<District> listDistricts = null;
+    District district = new();
+    List<Commune> listCommunes = null;
+    Commune commune = new();
+    public class CommuneJoinDistrict
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string DistrictName { get; set; }
+    }
+    List<CommuneJoinDistrict> listCommuneJoinDistrict = null;
+    string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+
+        var responseCommune = await client.GetFromJsonAsync<List<Commune>>("https://localhost:7219/api/Communes");
+        listCommunes = responseCommune;
+
+        var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
+        listDistricts = responseDistrict;
+
+        listCommuneJoinDistrict = (from commune in listCommunes
+                                join district in listDistricts on commune.DistrictId equals district.Id
+                                select new CommuneJoinDistrict
+                                {
+                                    Id = commune.Id,
+                                    Name = commune.Name,
+                                    DistrictName = district.Name
+                                }).ToList();
+        
+
+        errorMessage = string.Empty;
+    }
+
+    async Task Delete(Guid id)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.DeleteAsync($"https://localhost:7219/api/Communes/{id}");
+
+        await LoadData();
+    }
+
+    async Task Search(Guid id)
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetFromJsonAsync<Commune>($"https://localhost:7219/api/Communes/{id}");
+
+        listCommunes.Clear();
+        listCommunes.Add(response);
+    }
+
+
+    
+
+    
+}

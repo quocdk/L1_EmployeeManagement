@@ -34,6 +34,12 @@ namespace BUS.Services.Implements
 
             return obj;
         }
+        public City GetByName(string nameCity)
+        {
+            var obj = _cityRepo.GetByName(nameCity);
+
+            return obj;
+        }
 
         public List<City> GetList()
         {

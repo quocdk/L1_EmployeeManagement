@@ -26,7 +26,7 @@ namespace DAL.ApplicationDbContext
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer("Server=DESKTOP-LAOT6MD\\SQLEXPRESS;Database=Oceantech_L1_EmployeeManagement;Trusted_Connection=True;TrustServerCertificate=true;");
+                optionsBuilder.UseSqlServer("Server=QUOC\\SQLEXPRESS;Database=Oceantech_L1_EmployeeManagement;Trusted_Connection=True;TrustServerCertificate=true;");
             }
         }
 

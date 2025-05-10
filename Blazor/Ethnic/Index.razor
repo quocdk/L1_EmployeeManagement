@@ -1,23 +1,23 @@
-﻿@page "/city/index"
+﻿@page "/ethnic/index"
 @using DAL.Models
 @inject IHttpClientFactory _httpClientFactory
 
 <h4>
-    Danh sách Tỉnh / Thành phố
+    Danh sách Dân tộc
 </h4>
-<a class="btn btn-primary" href="city/create">Thêm mới</a>
+<a class="btn btn-primary" href="ethnic/create">Thêm mới</a>
 <button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
     <div class="col-sm-4">
-        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=city.Id>
+        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=ethnic.Id>
     </div>
-    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(city.Id))">Tìm kiếm</button>
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(ethnic.Id))">Tìm kiếm</button>
     @*<span>@errorMessage</span>*@
 </div>
 
 <br />
-@if (listCities == null)
+@if (listEthnics == null)
 {
     <div class="spinner-border m-5" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -29,32 +29,32 @@ else
         <thead>
             <tr>
                 <th>Tên</th>
-                <th></th>              
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var city in listCities)
+            @foreach (var ethnic in listEthnics)
             {
                 <tr>
                     @* <td>@(listCities.IndexOf(city) +1)</td> *@
-                    <td>@city.Name</td>
+                    <td>@ethnic.Name</td>
                     <td>
-                        <a class="btn btn-info" href="/city/detail/@city.Id">Chi tiết</a>
-                        <button class="btn btn-danger" @onclick="@(() => Delete(city.Id))">Xóa</button>
+                        <a class="btn btn-info" href="/ethnic/detail/@ethnic.Id">Chi tiết</a>
+                        <button class="btn btn-danger" @onclick="@(() => Delete(ethnic.Id))">Xóa</button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
-    
+
 }
 
 <span>@errorMessage</span>
 
 
 @code {
-    List<City> listCities = null;
-    City city = new();
+    List<Ethnic> listEthnics = null;
+    Ethnic ethnic = new();
     string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -67,9 +67,9 @@ else
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+        var response = await client.GetFromJsonAsync<List<Ethnic>>("https://localhost:7219/api/Ethnics");
 
-        listCities = response;
+        listEthnics = response;
 
         errorMessage = string.Empty;
     }
@@ -77,7 +77,7 @@ else
     async Task Delete(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
-        var response = await client.DeleteAsync($"https://localhost:7219/api/Cities/{id}");
+        var response = await client.DeleteAsync($"https://localhost:7219/api/Ethnics/{id}");
 
         await LoadData();
     }
@@ -87,12 +87,12 @@ else
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<City>($"https://localhost:7219/api/Cities/{id}");
+        var response = await client.GetFromJsonAsync<Ethnic>($"https://localhost:7219/api/Ethnics/{id}");
 
-        listCities.Clear();
-        listCities.Add(response);
+        listEthnics.Clear();
+        listEthnics.Add(response);
     }
 
 
-    
+
 }

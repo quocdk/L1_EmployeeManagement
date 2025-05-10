@@ -35,6 +35,13 @@ namespace API.Controllers
 
             return Ok(city);
         }
+        //[HttpGet("{name}")]
+        //public IActionResult Get(string name)
+        //{
+        //    City city = _cityService.GetByName(name);
+
+        //    return Ok(city);
+        //}
 
         // POST api/<CitiesController>
         [HttpPost]

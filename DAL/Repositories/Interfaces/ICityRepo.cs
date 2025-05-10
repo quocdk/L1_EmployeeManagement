@@ -10,6 +10,7 @@ namespace DAL.Repositories.Interfaces
     public interface ICityRepo
     {
         City GetById(Guid idCity);
+        City GetByName(string nameCity);
         List<City> GetList();
         bool Add(City request);
         bool Update(City request);

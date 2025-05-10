@@ -10,6 +10,7 @@ namespace BUS.Services.Interfaces
     public interface ICityService
     {
         City GetById(Guid idCity);
+        City GetByName(string nameCity);
         List<City> GetList();
         bool Add(City request);
         bool Update(City request);
