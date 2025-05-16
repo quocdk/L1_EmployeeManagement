@@ -1,20 +1,55 @@
-﻿@*@page "/city/create"
+﻿@page "/diploma/create"
 @using DAL.Models
 @inject IHttpClientFactory _httpClientFactory
 @inject NavigationManager NavigationManager
 
-<NavLink class="nav-link" href="city/index">◀ Danh sách Tỉnh / Thành phố</NavLink>
+<NavLink class="nav-link" href="diploma/index">◀ Danh sách Văn bằng</NavLink>
 <hr />
 <h5>
-    Thêm mới Tỉnh / Thành phố
+    Thêm mới Văn bằng
 </h5>
 <br />
 <div class="mb-3 row">
     <label class="col-sm-1 col-form-label">Tên: </label>
-    <div class="col-sm-3">
-        <input class="form-control" @bind=city.Name>
+    <div class="me-5 col-sm-3">
+        <input class="form-control" @bind=diploma.Name>
     </div>
-    <span>@errorMessage</span>
+    <label class="col-sm-1 col-form-label">Ngày Cấp: </label>
+    <div class="me-5 col-sm-2">
+        <input type="date" class="form-control" @bind=diploma.IssueDate>
+    </div>
+    <label class="col-sm-1 col-form-label">Ngày hết hạn: </label>
+    <div class="col-sm-2">
+        <input type="date" class="form-control" @bind=diploma.ExpiryDate>
+    </div>
+</div>
+<div class="mb-3 row">
+    <label class="col-sm-1 col-form-label">Đơn vị cấp: </label>
+    <div class="me-5 col-sm-3">
+        <select class="form-select" @bind=diploma.CityId aria-label="Default select example">
+            <option selected></option>
+            @if (listCity != null)
+            {
+                @foreach (var city in listCity)
+                {
+                    <option value="@city.Id">@city.Name</option>
+                }
+            }
+        </select>
+    </div>
+    <label class="col-sm-2 col-form-label">Nhân viên: </label>
+    <div class="col-sm-3">
+        <select class="form-select" @bind=diploma.EmployeeId aria-label="Default select example">
+            <option selected></option>
+            @if (listEmployee != null)
+            {
+                @foreach (var employee in listEmployee)
+                {
+                    <option value="@employee.Id">@employee.FullName</option>
+                }
+            }
+        </select>
+    </div>
 </div>
 <hr />
 <button class="btn btn-success" @onclick="@(() => Add())">Thêm</button>
@@ -22,30 +57,50 @@
 
 
 @code {
+    List<Employee> listEmployee = null;
+    Employee employee = new();
+    List<City> listCity = null;
     City city = new();
+
+    Diploma diploma = new();
     string errorMessage = string.Empty;
     string message = string.Empty;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+        var responseEmployee = await client.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees");
+        listEmployee = responseEmployee;
+        var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+        listCity = responseCity;
+    }
+
     async Task Add()
     {
-        if (string.IsNullOrWhiteSpace(city.Name))
+        if (string.IsNullOrWhiteSpace(diploma.Name))
         {
             errorMessage = "Tên không được rỗng hoặc chứa toàn khoảng trắng";
         }
         else
         {
-            city.Id = Guid.NewGuid();
+            diploma.Id = Guid.NewGuid();
             var client = _httpClientFactory.CreateClient();
-            var response = await client.PostAsJsonAsync<City>("https://localhost:7219/api/Cities", city);
+            var response = await client.PostAsJsonAsync<Diploma>("https://localhost:7219/api/Diplomas", diploma);
 
             errorMessage = string.Empty;
             message = "Thêm thành công";
 
-            NavigationManager.NavigateTo("/city/index");
+            NavigationManager.NavigateTo("/diploma/index");
 
         }
     }
 
 
 }
-*@

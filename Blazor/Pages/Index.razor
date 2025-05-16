@@ -7,7 +7,7 @@
 Welcome to your new app.
 
 <SurveyPrompt Title="How is Blazor working for you?" /> *@
-@page "/"
+@*@page "/"
 @using DAL.Models
 @inject IHttpClientFactory _httpClientFactory
 
@@ -36,7 +36,7 @@ else
 <input @bind=employee.DateOfBirth>
 <p>3. Tuổi</p>
 <input @bind=employee.Age>
-<p>4. Dân tộc</p>
+<p>4. Dân tộc</p>*@
 @* <input @bind=employee.Ethnic.Name>
 <p>5. Nghề nghiệp</p>
 <input @bind=employee.Occupation.Name>
@@ -52,7 +52,7 @@ else
 <p>Xã / Phường</p>
 <input @bind=employee.Commune.Name> *@
 
-<span>@errorMessage</span>
+@*<span>@errorMessage</span>
 <button @onclick="@(() => Create())">Thêm</button>
 <button @onclick="@(() => Update())">Sửa</button>
 <span>@errorFileMessage</span>
@@ -137,3 +137,4 @@ else
         }
     }
 }
+*@

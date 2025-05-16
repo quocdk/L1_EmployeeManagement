@@ -10,22 +10,18 @@
 </h5>
 <br />
 <div class="mb-3 row">
-    <label class="col-sm-1 col-form-label">Tên: </label>
+    <label class="col-sm-2 col-form-label">Tên: </label>
     <div class="col-sm-3">
         <input class="form-control" @bind=commune.Name>
     </div>
     <span>@errorMessage</span>
 </div>
 <div class="mb-3 row">
-    <label class="col-sm-1 col-form-label">Quận / Huyện: </label>
+    <label class="col-sm-2 col-form-label">Quận / Huyện: </label>
     <div class="col-sm-3">
         <select class="form-select" @bind=commune.DistrictId aria-label="Default select example">
             <option selected>Open this select menu</option>
-            @if (listDistricts == null)
-            {
-                <option value="1">1</option>
-            }
-            else
+            @if (listDistricts != null)
             {
                 @foreach (var district in listDistricts)
                 {

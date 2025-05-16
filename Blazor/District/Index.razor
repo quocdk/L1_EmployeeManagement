@@ -6,18 +6,17 @@
     Danh sách Huyện / Quận
 </h4>
 <a class="btn btn-primary" href="district/create">Thêm mới</a>
-<button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
+<button class="btn btn-primary" @onclick="@(() => ReLoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
     <div class="col-sm-4">
-        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=district.Id>
+        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=district.Name>
     </div>
-    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(district.Id))">Tìm kiếm</button>
-    @*<span>@errorMessage</span>*@
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(district.Name))">Tìm kiếm</button>
 </div>
 
 <br />
-@if (listDistricts == null)
+@if (listDistrictJoinCity == null && listDistrictJoinCitySearchByCityName == null && listDistrictJoinCitySearchByDistrictName == null)
 {
     <div class="spinner-border m-5" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -33,18 +32,49 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var district in listDistrictJoinCity)
+            @if (listDistrictJoinCitySearchByDistrictName != null)
             {
-                <tr>
-                    @* <td>@(listCities.IndexOf(city) +1)</td> *@
-                    <td>@district.Name</td>
-                    <td>@district.CityName</td>
-                    <td>
-                        <a class="btn btn-info" href="/district/detail/@district.Id">Chi tiết</a>
-                        <button class="btn btn-danger" @onclick="@(() => Delete(district.Id))">Xóa</button>
-                    </td>
-                </tr>
+                @foreach (var district in listDistrictJoinCitySearchByDistrictName)
+                {
+                    <tr>
+                        <td>@district.Name</td>
+                        <td>@district.CityName</td>
+                        <td>
+                            <a class="btn btn-info" href="/district/detail/@district.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(district.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
+            } 
+            @if (listDistrictJoinCitySearchByCityName != null)
+            {
+                @foreach (var district in listDistrictJoinCitySearchByCityName)
+                {
+                    <tr>
+                        <td>@district.Name</td>
+                        <td>@district.CityName</td>
+                        <td>
+                            <a class="btn btn-info" href="/district/detail/@district.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(district.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
             }
+            @if(listDistrictJoinCitySearchByDistrictName == null && listDistrictJoinCitySearchByCityName == null)
+            {
+                @foreach (var district in listDistrictJoinCity)
+                {
+                    <tr>
+                        <td>@district.Name</td>
+                        <td>@district.CityName</td>
+                        <td>
+                            <a class="btn btn-info" href="/district/detail/@district.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(district.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
+            }
+            
         </tbody>
     </table>
 
@@ -58,6 +88,8 @@ else
     City city = new();
     List<District> listDistricts = null;
     District district = new();
+    List<Commune> listCommunes = null;
+    List<Commune> listCommunesDelete = null;
     public class DistrictJoinCity
     {
         public Guid Id { get; set; }
@@ -65,6 +97,8 @@ else
         public string CityName { get; set; }
     }
     List<DistrictJoinCity> listDistrictJoinCity = null;
+    List<DistrictJoinCity> listDistrictJoinCitySearchByDistrictName = null;
+    List<DistrictJoinCity> listDistrictJoinCitySearchByCityName = null;
     string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -77,6 +111,9 @@ else
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
+
+        var responseCommune = await client.GetFromJsonAsync<List<Commune>>("https://localhost:7219/api/Communes");
+        listCommunes = responseCommune;
 
         var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
         listDistricts = responseDistrict;
@@ -92,28 +129,32 @@ else
                                     Name = district.Name,
                                     CityName = city.Name
                                 }).ToList();
-        
-
-        errorMessage = string.Empty;
     }
-
+    async Task ReLoadData()
+    {
+        listDistrictJoinCitySearchByCityName = null;
+        listDistrictJoinCitySearchByDistrictName = null;
+    }
     async Task Delete(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
-        var response = await client.DeleteAsync($"https://localhost:7219/api/Districts/{id}");
+        var responseDeleteDistrict = await client.DeleteAsync($"https://localhost:7219/api/Districts/{id}");
+
+        listCommunesDelete = listCommunes.Where(x => x.DistrictId == id).ToList();
+        foreach (var commune in listCommunesDelete)
+        {
+            var responseDeleteCommune = await client.DeleteAsync($"https://localhost:7219/api/Communes/{commune.Id}");
+        }
 
         await LoadData();
     }
 
-    async Task Search(Guid id)
+    async Task Search(string name)
     {
         await Task.Delay(1000);
 
-        var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<District>($"https://localhost:7219/api/Districts/{id}");
-
-        listDistricts.Clear();
-        listDistricts.Add(response);
+        listDistrictJoinCitySearchByDistrictName = listDistrictJoinCity.Where(x => x.Name == name).ToList();
+        listDistrictJoinCitySearchByCityName = listDistrictJoinCity.Where(x => x.CityName == name).ToList();
     }
 
 

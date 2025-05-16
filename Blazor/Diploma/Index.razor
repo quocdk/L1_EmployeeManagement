@@ -1,5 +1,140 @@
-﻿<h3>Index</h3>
+﻿@page "/diploma/index"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+
+<h4>
+    Danh sách Văn bằng
+</h4>
+<a class="btn btn-primary" href="diploma/create">Thêm mới</a>
+<button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
+<hr />
+<div class="mb-3 row">
+    <div class="col-sm-4">
+        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=diploma.Id>
+    </div>
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(diploma.Id))">Tìm kiếm</button>
+</div>
+
+<br />
+@if (listDiplomaJoin == null)
+{
+    <div class="spinner-border m-5" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên</th>
+                <th>Đơn vị cấp</th>
+                <th>Ngày cấp</th>
+                <th>Ngày hết hạn</th>             
+                <th>Tên nhân viên</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var diploma in listDiplomaJoin)
+            {
+                <tr>
+                    <td>@diploma.Name</td>
+                    <td>@diploma.CityName</td>
+                    <td>@diploma.IssueDate.ToString("dd/MM/yyyy")</td>
+                    <td>@diploma.ExpiryDate.ToString("dd/MM/yyyy")</td>
+                    <td>@diploma.EmployeeName</td>
+                    <td>
+                        <a class="btn btn-info" href="/diploma/detail/@diploma.Id">Chi tiết</a>
+                        <button class="btn btn-danger" @onclick="@(() => Delete(diploma.Id))">Xóa</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
 
 @code {
+    List<Diploma> listDiploma = null;
+    Diploma diploma = new();
+
+    List<Employee> listEmployee = null;
+    Employee employee = new();
+    List<City> listCity = null;
+    City city = new();
+
+    public class DiplomaJoin
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public DateTime IssueDate { get; set; }
+        public DateTime ExpiryDate { get; set; }
+        public string CityName { get; set; }
+        public string EmployeeName { get; set; }
+    }
+    List<DiplomaJoin> listDiplomaJoin = null;
+    string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+
+        var responseDiploma = await client.GetFromJsonAsync<List<Diploma>>("https://localhost:7219/api/Diplomas");
+        listDiploma = responseDiploma;
+
+        var responseEmployee = await client.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees");
+        listEmployee = responseEmployee;
+        var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+        listCity = responseCity;
+
+        
+
+        listDiplomaJoin = (from diploma in listDiploma
+                             join employee in listEmployee on diploma.EmployeeId equals employee.Id
+                             join city in listCity on diploma.CityId equals city.Id
+                             select new DiplomaJoin
+                                 {
+                                     Id = diploma.Id,
+                                     Name = diploma.Name,
+                                     IssueDate = diploma.IssueDate,
+                                     ExpiryDate = diploma.ExpiryDate,
+                                     EmployeeName = employee.FullName,
+                                     CityName = city.Name                             
+                                 }).ToList();
+
+
+        errorMessage = string.Empty;
+    }
+
+    async Task Delete(Guid id)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.DeleteAsync($"https://localhost:7219/api/Diplomas/{id}");
+
+        await LoadData();
+    }
+
+    async Task Search(Guid id)
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetFromJsonAsync<Diploma>($"https://localhost:7219/api/Diplomas/{id}");
+
+        listDiploma.Clear();
+        listDiploma.Add(response);
+    }
+
+
+
+
 
 }

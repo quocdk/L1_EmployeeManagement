@@ -6,18 +6,17 @@
     Danh sách Dân tộc
 </h4>
 <a class="btn btn-primary" href="ethnic/create">Thêm mới</a>
-<button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
+<button class="btn btn-primary" @onclick="@(() => ReLoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
     <div class="col-sm-4">
-        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=ethnic.Id>
+        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=ethnic.Name>
     </div>
-    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(ethnic.Id))">Tìm kiếm</button>
-    @*<span>@errorMessage</span>*@
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(ethnic.Name))">Tìm kiếm</button>
 </div>
 
 <br />
-@if (listEthnics == null)
+@if (listEthnics == null && listEthnicsSearch == null)
 {
     <div class="spinner-border m-5" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -33,27 +32,41 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var ethnic in listEthnics)
+            @if (listEthnicsSearch != null)
             {
-                <tr>
-                    @* <td>@(listCities.IndexOf(city) +1)</td> *@
-                    <td>@ethnic.Name</td>
-                    <td>
-                        <a class="btn btn-info" href="/ethnic/detail/@ethnic.Id">Chi tiết</a>
-                        <button class="btn btn-danger" @onclick="@(() => Delete(ethnic.Id))">Xóa</button>
-                    </td>
-                </tr>
+                @foreach (var ethnic in listEthnicsSearch)
+                {
+                    <tr>
+                        <td>@ethnic.Name</td>
+                        <td>
+                            <a class="btn btn-info" href="/ethnic/detail/@ethnic.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(ethnic.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
             }
+            else
+            {
+                @foreach (var ethnic in listEthnics)
+                {
+                    <tr>
+                        <td>@ethnic.Name</td>
+                        <td>
+                            <a class="btn btn-info" href="/ethnic/detail/@ethnic.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(ethnic.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
+            }
+            
         </tbody>
     </table>
 
 }
 
-<span>@errorMessage</span>
-
-
 @code {
     List<Ethnic> listEthnics = null;
+    List<Ethnic> listEthnicsSearch = null;
     Ethnic ethnic = new();
     string errorMessage = string.Empty;
 
@@ -67,11 +80,15 @@ else
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<List<Ethnic>>("https://localhost:7219/api/Ethnics");
 
+        var response = await client.GetFromJsonAsync<List<Ethnic>>("https://localhost:7219/api/Ethnics");
         listEthnics = response;
 
         errorMessage = string.Empty;
+    }
+    async Task ReLoadData()
+    {
+        listEthnicsSearch = null;
     }
 
     async Task Delete(Guid id)
@@ -82,15 +99,11 @@ else
         await LoadData();
     }
 
-    async Task Search(Guid id)
+    async Task Search(string name)
     {
         await Task.Delay(1000);
 
-        var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<Ethnic>($"https://localhost:7219/api/Ethnics/{id}");
-
-        listEthnics.Clear();
-        listEthnics.Add(response);
+        listEthnicsSearch = listEthnics.Where(x => x.Name == name).ToList();
     }
 
 

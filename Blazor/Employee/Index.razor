@@ -1,5 +1,171 @@
-﻿<h3>Index</h3>
+﻿@page "/employee/index"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+
+<h4>
+    Danh sách Nhân viên
+</h4>
+<a class="btn btn-primary" href="employee/create">Thêm mới</a>
+<button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
+<hr />
+<div class="mb-3 row">
+    <div class="col-sm-4">
+        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=employee.Id>
+    </div>
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(employee.Id))">Tìm kiếm</button>
+    @*<span>@errorMessage</span>*@
+</div>
+
+<br />
+@if (listEmployeesJoin == null)
+{
+    <div class="spinner-border m-5" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên</th>
+                <th>Ngày sinh</th>
+                <th>Tuổi</th>
+                <th>Dân tộc</th>
+                <th>Nghề</th>
+                <th>Căn cước</th>
+                <th>Số điện thoại</th>
+                <th>Địa chỉ</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var employee in listEmployeesJoin)
+            {
+                <tr>
+                    @* <td>@(listCities.IndexOf(city) +1)</td> *@
+                    <td>@employee.FullName</td>
+                    <td>@employee.DateOfBirth.ToString("dd/MM/yyyy")</td>
+                    <td>@employee.Age</td>
+                    <td>@employee.EthnicName</td>
+                    <td>@employee.OccupationName</td>
+                    <td>@employee.CitizenIdentityCard</td>
+                    <td>@employee.PhoneNumber</td>
+                    <td>@employee.Address</td>
+                    <td>
+                        <a class="btn btn-info" href="/employee/detail/@employee.Id">Chi tiết</a>
+                        <button class="btn btn-danger" @onclick="@(() => Delete(employee.Id))">Xóa</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+<span>@errorMessage</span>
+
 
 @code {
+    List<Employee> listEmployees = null;
+    Employee employee = new();
+    List<Ethnic> listEthnics = null;
+    Ethnic ethnic = new();
+    List<Occupation> listOccupations = null;
+    Occupation occupation = new();
+
+    List<City> listCities = null;
+    City city = new();
+    List<District> listDistricts = null;
+    District district = new();
+    List<Commune> listCommunes = null;
+    Commune commune = new();
+
+    public class EmployeeJoin
+    {
+        public Guid Id { get; set; }
+        public string FullName { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public int Age { get; set; }
+        public string EthnicName { get; set;  }
+        public string OccupationName { get; set; }
+        public string CitizenIdentityCard { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Address { get; set; }
+    }
+    List<EmployeeJoin> listEmployeesJoin = null;
+    string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+
+        var responseEmployee = await client.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees");
+        listEmployees = responseEmployee;
+
+        var responseEthnic = await client.GetFromJsonAsync<List<Ethnic>>("https://localhost:7219/api/Ethnics");
+        listEthnics = responseEthnic;
+        var responseOccupation = await client.GetFromJsonAsync<List<Occupation>>("https://localhost:7219/api/Occupations");
+        listOccupations = responseOccupation;
+
+        var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+        listCities = responseCity;
+        var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
+        listDistricts = responseDistrict;
+        var responseCommune = await client.GetFromJsonAsync<List<Commune>>("https://localhost:7219/api/Communes");
+        listCommunes = responseCommune;
+
+        listEmployeesJoin = (from employee in listEmployees
+                             join ethnic in listEthnics on employee.EthnicId equals ethnic.Id
+                             join occupation in listOccupations on employee.OccupationId equals occupation.Id
+                             join city in listCities on employee.CityId equals city.Id
+                             join district in listDistricts on employee.DistrictId equals district.Id
+                             join commune in listCommunes on employee.CommuneId equals commune.Id
+                             select new EmployeeJoin
+                                {
+                                    Id = employee.Id,
+                                    FullName = employee.FullName,
+                                    DateOfBirth = employee.DateOfBirth,
+                                    Age = employee.Age,
+                                    EthnicName = ethnic.Name,
+                                    OccupationName = occupation.Name,
+                                    CitizenIdentityCard = employee.CitizenIdentityCard,
+                                    PhoneNumber = employee.PhoneNumber,
+                                    Address = employee.SpecificAddress + " / " + commune.Name + " / " + district.Name + " / " + city.Name
+                                 }).ToList();
+
+
+        errorMessage = string.Empty;
+    }
+
+    async Task Delete(Guid id)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.DeleteAsync($"https://localhost:7219/api/Employees/{id}");
+
+        await LoadData();
+    }
+
+    async Task Search(Guid id)
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{id}");
+
+        listEmployees.Clear();
+        listEmployees.Add(response);
+    }
+
+
+
+
 
 }

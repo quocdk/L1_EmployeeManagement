@@ -1,5 +1,204 @@
-﻿<h3>Create</h3>
+﻿@page "/employee/create"
+@using DAL.Models
+@inject IHttpClientFactory _httpClientFactory
+@inject NavigationManager NavigationManager
+
+<NavLink class="nav-link" href="employee/index">◀ Danh sách Nhân viên</NavLink>
+<hr />
+<h5>
+    Thêm mới Nhân viên
+</h5>
+<br />
+<div class="mb-3 row">
+    <label class="col-sm-1 col-form-label">Họ tên: </label>
+    <div class="me-5 col-sm-3">
+        <input class="form-control" @bind=employee.FullName>
+    </div>  
+    <label class="col-sm-1 col-form-label">Ngày sinh: </label>
+    <div class="me-5 col-sm-2">
+        <input type="date" class="form-control" @bind=employee.DateOfBirth>
+    </div>
+    <label class="col-sm-1 col-form-label">Tuổi: </label>
+    <div class="col-sm-1">
+        <input class="form-control" @bind=employee.Age>
+    </div>
+</div>
+<div class="mb-3 row">
+    <label class="col-sm-1 col-form-label">Dân tộc: </label>
+    <div class="me-5 col-sm-2">
+        <select class="form-select" @bind=employee.EthnicId aria-label="Default select example">
+            <option selected>Chọn dân tộc</option>
+            @if (listEthnics != null)
+            {
+                @foreach (var ethnic in listEthnics)
+                {
+                    <option value="@ethnic.Id">@ethnic.Name</option>
+                }
+            }
+        </select>
+    </div>
+    <label class="col-sm-2 col-form-label">Nghề nghiệp: </label>
+    <div class="col-sm-3">
+        <select class="form-select" @bind=employee.OccupationId aria-label="Default select example">
+            <option selected>Chọn nghề nghiệp</option>
+            @if (listOccupations != null)
+            {
+                @foreach (var occupation in listOccupations)
+                {
+                    <option value="@occupation.Id">@occupation.Name</option>
+                }
+            }
+        </select>
+    </div>
+</div>
+<div class="mb-3 row">
+    <label class="col-sm-2 col-form-label">Căn cước công dân: </label>
+    <div class="me-5 col-sm-3">
+        <input class="form-control" @bind=employee.CitizenIdentityCard>
+    </div>
+    <label class="col-sm-2 col-form-label">Số điện thoại: </label>
+    <div class="col-sm-2">
+        <input class="form-control" @bind=employee.PhoneNumber>
+    </div>
+</div>
+<div class="mb-3 row">
+    <label class="col-sm-2 col-form-label">Tỉnh / Thành phố: </label>
+    <div class="me-5 col-sm-3">
+        <select class="form-select" @onchange="OnCityChanged" aria-label="Default select example">
+            <option selected disabled></option>
+            @if (listCities != null)
+            {
+                @foreach (var city in listCities)
+                {
+                    <option value="@city.Id">@city.Name</option>
+                }
+            }
+        </select>
+    </div>
+    <label class="col-sm-2 col-form-label">Quận / Huyện: </label>
+    <div class="col-sm-3">
+        <select class="form-select" @onchange="OnDistrictChanged" aria-label="Default select example">
+            <option selected disabled></option>
+            @if (listDistrictsByCityId != null)
+            {
+                @foreach (var district in listDistrictsByCityId)
+                {
+                    <option value="@district.Id">@district.Name</option>
+                }
+            }
+        </select>
+    </div>
+</div>
+<div class="mb-3 row">
+    <label class="col-sm-2 col-form-label">Xã / Phường: </label>
+    <div class="me-5 col-sm-3">
+        <select class="form-select" @bind=employee.CommuneId aria-label="Default select example">
+            <option selected disabled></option>
+            @if (listCommunesByDistrictId != null)
+            {
+                @foreach (var commune in listCommunesByDistrictId)
+                {
+                    <option value="@commune.Id">@commune.Name</option>
+                }
+            }
+        </select>
+    </div>
+    <label class="col-sm-2 col-form-label">Cụ thể: </label>
+    <div class="col-sm-3">
+        <input class="form-control" @bind=employee.SpecificAddress>
+    </div>
+</div>
+<hr />
+<button class="btn btn-success" @onclick="@(() => Add())">Thêm</button>
+<span>@message</span>
+
 
 @code {
+    List<Ethnic> listEthnics = null;
+    Ethnic ethnic = new();
+    List<Occupation> listOccupations = null;
+    Occupation occupation = new();
+    List<City> listCities = null;
+    City city = new();
+    List<District> listDistricts = null;
+    List<District> listDistrictsByCityId = null;
+    District district = new();
+    List<Commune> listCommunes = null;
+    List<Commune> listCommunesByDistrictId = null;
+    Commune commune = new();
+
+
+    Employee employee = new();
+    string errorMessage = string.Empty;
+    string message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        await Task.Delay(1000);
+
+        var client = _httpClientFactory.CreateClient();
+        var responseEthnic = await client.GetFromJsonAsync<List<Ethnic>>("https://localhost:7219/api/Ethnics");
+        listEthnics = responseEthnic;
+        var responseOccupation = await client.GetFromJsonAsync<List<Occupation>>("https://localhost:7219/api/Occupations");
+        listOccupations = responseOccupation;
+        var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+        listCities = responseCity;
+        var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
+        listDistricts = responseDistrict;
+        var responseCommune = await client.GetFromJsonAsync<List<Commune>>("https://localhost:7219/api/Communes");
+        listCommunes = responseCommune;
+    }
+    async Task OnCityChanged(ChangeEventArgs e)
+    {
+        var selectedCityId = Guid.Parse(e.Value.ToString());
+
+        employee.CityId = selectedCityId;
+
+        await LoadDistrictsByCityId(selectedCityId);
+    }
+    async Task LoadDistrictsByCityId(Guid id)
+    {
+        listDistrictsByCityId = listDistricts.Where(x => x.CityId == id).ToList();
+    }
+
+    async Task OnDistrictChanged(ChangeEventArgs e)
+    {
+        var selectedDistrictId = Guid.Parse(e.Value.ToString());
+
+        employee.DistrictId = selectedDistrictId;
+
+        await LoadCommunesByDistrictId(selectedDistrictId);
+    }
+    async Task LoadCommunesByDistrictId(Guid id)
+    {
+        listCommunesByDistrictId = listCommunes.Where(x => x.DistrictId == id).ToList();
+    }
+
+    async Task Add()
+    {
+        if (string.IsNullOrWhiteSpace(employee.FullName))
+        {
+            errorMessage = "Tên không được rỗng hoặc chứa toàn khoảng trắng";
+        }
+        else
+        {
+            employee.Id = Guid.NewGuid();
+            employee.DiplomaNumber = 0;
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync<Employee>("https://localhost:7219/api/Employees", employee);
+
+            errorMessage = string.Empty;
+            message = "Thêm thành công";
+
+            NavigationManager.NavigateTo("/employee/index");
+
+        }
+    }
+
 
 }

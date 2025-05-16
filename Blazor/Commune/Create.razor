@@ -10,39 +10,49 @@
 </h5>
 <br />
 <div class="mb-3 row">
-    <label class="col-sm-1 col-form-label">Tên: </label>
+    <label class="col-sm-2 col-form-label">Tên: </label>
     <div class="col-sm-3">
         <input class="form-control" @bind=commune.Name>
     </div>
     <span>@errorMessage</span>
 </div>
 <div class="mb-3 row">
-    <label class="col-sm-1 col-form-label">Quận / Huyện: </label>
+    <label class="col-sm-2 col-form-label">Tỉnh / Thành phố: </label>
+    <div class="col-sm-3">
+        <select class="form-select" @onchange="OnCityChanged" aria-label="Default select example">
+            <option selected disabled></option>
+            @if (listDistricts != null)
+            {
+                @foreach (var city in listCities)
+                {
+                    <option value="@city.Id">@city.Name</option>
+                }
+            }
+        </select>
+    </div>
+    <label class="col-sm-2 col-form-label">Quận / Huyện: </label>
     <div class="col-sm-3">
         <select class="form-select" @bind=commune.DistrictId aria-label="Default select example">
-            <option selected>Open this select menu</option>
-            @if (listDistricts == null)
+            <option selected></option>
+            @if (listDistrictsByCityId != null)
             {
-                <option value="1">1</option>
-            }
-            else
-            {
-                @foreach (var district in listDistricts)
+                @foreach (var district in listDistrictsByCityId)
                 {
                     <option value="@district.Id">@district.Name</option>
                 }
-            }          
+            }       
         </select>
     </div>
-    <span>@errorMessage</span>
 </div>
 <hr />
 <button class="btn btn-success" @onclick="@(() => Add())">Thêm</button>
-<span>@message</span>
 
 
 @code {
+    List<City> listCities = null;
+    City city = new();
     List<District> listDistricts = null;
+    List<District> listDistrictsByCityId = null;
     District district = new();
     Commune commune = new();
     string errorMessage = string.Empty;
@@ -58,9 +68,22 @@
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
 
-        listDistricts = response;
+        var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
+        listDistricts = responseDistrict;
+
+        var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+        listCities = responseCity;
+    }
+    async Task OnCityChanged(ChangeEventArgs e)
+    {
+        var selectedCityId = Guid.Parse(e.Value.ToString());
+
+        await LoadDistrictsByCityId(selectedCityId);
+    }
+    async Task LoadDistrictsByCityId(Guid id)
+    {
+        listDistrictsByCityId = listDistricts.Where(x => x.CityId == id).ToList();
     }
 
     async Task Add()

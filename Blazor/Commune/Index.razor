@@ -6,18 +6,17 @@
     Danh sách Xã / Phường
 </h4>
 <a class="btn btn-primary" href="commune/create">Thêm mới</a>
-<button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
+<button class="btn btn-primary" @onclick="@(() => ReLoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
     <div class="col-sm-4">
-        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=commune.Id>
+        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=commune.Name>
     </div>
-    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(commune.Id))">Tìm kiếm</button>
-    @*<span>@errorMessage</span>*@
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(commune.Name))">Tìm kiếm</button>
 </div>
 
 <br />
-@if (listCommuneJoinDistrict == null)
+@if (listCommuneJoin == null && listCommuneJoinSearchByCityName == null && listCommuneJoinSearchByDistrictName == null && listCommuneJoinSearchByName == null)
 {
     <div class="spinner-border m-5" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -30,21 +29,71 @@ else
             <tr>
                 <th>Tên</th>
                 <th>Quận / Huyện</th>
+                <th>Tỉnh / Thành phố</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var commune in listCommuneJoinDistrict)
+            @if (listCommuneJoinSearchByName != null)
             {
-                <tr>
-                    @* <td>@(listCities.IndexOf(city) +1)</td> *@
-                    <td>@commune.Name</td>
-                    <td>@commune.DistrictName</td>
-                    <td>
-                        <a class="btn btn-info" href="/commune/detail/@commune.Id">Chi tiết</a>
-                        <button class="btn btn-danger" @onclick="@(() => Delete(commune.Id))">Xóa</button>
-                    </td>
-                </tr>
+                @foreach (var commune in listCommuneJoinSearchByName)
+                {
+                    <tr>
+                        <td>@commune.Name</td>
+                        <td>@commune.DistrictName</td>
+                        <td>@commune.CityName</td>
+                        <td>
+                            <a class="btn btn-info" href="/commune/detail/@commune.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(commune.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
             }
+            @if (listCommuneJoinSearchByDistrictName != null)
+            {
+                @foreach (var commune in listCommuneJoinSearchByDistrictName)
+                {
+                    <tr>
+                        <td>@commune.Name</td>
+                        <td>@commune.DistrictName</td>
+                        <td>@commune.CityName</td>
+                        <td>
+                            <a class="btn btn-info" href="/commune/detail/@commune.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(commune.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
+            }
+            @if (listCommuneJoinSearchByCityName != null)
+            {
+                @foreach (var commune in listCommuneJoinSearchByCityName)
+                {
+                    <tr>
+                        <td>@commune.Name</td>
+                        <td>@commune.DistrictName</td>
+                        <td>@commune.CityName</td>
+                        <td>
+                            <a class="btn btn-info" href="/commune/detail/@commune.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(commune.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
+            }
+            @if (listCommuneJoinSearchByName == null && listCommuneJoinSearchByDistrictName == null && listCommuneJoinSearchByCityName == null)
+            {
+                @foreach (var commune in listCommuneJoin)
+                {
+                    <tr>
+                        <td>@commune.Name</td>
+                        <td>@commune.DistrictName</td>
+                        <td>@commune.CityName</td>
+                        <td>
+                            <a class="btn btn-info" href="/commune/detail/@commune.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(commune.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
+            }
+            
         </tbody>
     </table>
 
@@ -54,17 +103,23 @@ else
 
 
 @code {
+    List<City> listCities = null;
+    City city = new();
     List<District> listDistricts = null;
     District district = new();
     List<Commune> listCommunes = null;
     Commune commune = new();
-    public class CommuneJoinDistrict
+    public class CommuneJoin
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string DistrictName { get; set; }
+        public string CityName { get; set; }
     }
-    List<CommuneJoinDistrict> listCommuneJoinDistrict = null;
+    List<CommuneJoin> listCommuneJoin = null;
+    List<CommuneJoin> listCommuneJoinSearchByName = null;
+    List<CommuneJoin> listCommuneJoinSearchByDistrictName = null;
+    List<CommuneJoin> listCommuneJoinSearchByCityName = null;
     string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -84,17 +139,25 @@ else
         var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
         listDistricts = responseDistrict;
 
-        listCommuneJoinDistrict = (from commune in listCommunes
-                                join district in listDistricts on commune.DistrictId equals district.Id
-                                select new CommuneJoinDistrict
-                                {
-                                    Id = commune.Id,
-                                    Name = commune.Name,
-                                    DistrictName = district.Name
-                                }).ToList();
-        
+        var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+        listCities = responseCity;
 
-        errorMessage = string.Empty;
+        listCommuneJoin = (from commune in listCommunes
+                           join district in listDistricts on commune.DistrictId equals district.Id
+                           join city in listCities on district.CityId equals city.Id
+                           select new CommuneJoin
+                               {
+                                   Id = commune.Id,
+                                   Name = commune.Name,
+                                   DistrictName = district.Name,
+                                   CityName = city.Name
+                               }).ToList();
+    }
+    async Task ReLoadData()
+    {
+        listCommuneJoinSearchByName = null;
+        listCommuneJoinSearchByDistrictName = null;
+        listCommuneJoinSearchByCityName = null;
     }
 
     async Task Delete(Guid id)
@@ -105,15 +168,13 @@ else
         await LoadData();
     }
 
-    async Task Search(Guid id)
+    async Task Search(string name)
     {
         await Task.Delay(1000);
 
-        var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<Commune>($"https://localhost:7219/api/Communes/{id}");
-
-        listCommunes.Clear();
-        listCommunes.Add(response);
+        listCommuneJoinSearchByName = listCommuneJoin.Where(x => x.Name == name).ToList();
+        listCommuneJoinSearchByDistrictName = listCommuneJoin.Where(x => x.DistrictName == name).ToList();
+        listCommuneJoinSearchByCityName = listCommuneJoin.Where(x => x.CityName == name).ToList();
     }
 
 
