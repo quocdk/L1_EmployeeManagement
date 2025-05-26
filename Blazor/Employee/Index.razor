@@ -13,7 +13,6 @@
         <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=employee.Id>
     </div>
     <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(employee.Id))">Tìm kiếm</button>
-    @*<span>@errorMessage</span>*@
 </div>
 
 <br />
@@ -36,6 +35,7 @@ else
                 <th>Căn cước</th>
                 <th>Số điện thoại</th>
                 <th>Địa chỉ</th>
+                <th>Số văn bằng</th>
                 <th></th>
             </tr>
         </thead>
@@ -52,6 +52,7 @@ else
                     <td>@employee.CitizenIdentityCard</td>
                     <td>@employee.PhoneNumber</td>
                     <td>@employee.Address</td>
+                    <td>@employee.DiplomaNumber</td>
                     <td>
                         <a class="btn btn-info" href="/employee/detail/@employee.Id">Chi tiết</a>
                         <button class="btn btn-danger" @onclick="@(() => Delete(employee.Id))">Xóa</button>
@@ -69,17 +70,24 @@ else
 @code {
     List<Employee> listEmployees = null;
     Employee employee = new();
+
     List<Ethnic> listEthnics = null;
     Ethnic ethnic = new();
+
     List<Occupation> listOccupations = null;
     Occupation occupation = new();
 
     List<City> listCities = null;
     City city = new();
+
     List<District> listDistricts = null;
     District district = new();
+
     List<Commune> listCommunes = null;
     Commune commune = new();
+    
+    List<Diploma> listDiplomas = null;
+    Diploma diploma = new();
 
     public class EmployeeJoin
     {
@@ -92,8 +100,10 @@ else
         public string CitizenIdentityCard { get; set; }
         public string PhoneNumber { get; set; }
         public string Address { get; set; }
+        public int DiplomaNumber { get; set; }
     }
     List<EmployeeJoin> listEmployeesJoin = null;
+
     string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -112,15 +122,21 @@ else
 
         var responseEthnic = await client.GetFromJsonAsync<List<Ethnic>>("https://localhost:7219/api/Ethnics");
         listEthnics = responseEthnic;
+
         var responseOccupation = await client.GetFromJsonAsync<List<Occupation>>("https://localhost:7219/api/Occupations");
         listOccupations = responseOccupation;
 
         var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
         listCities = responseCity;
+
         var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
         listDistricts = responseDistrict;
+
         var responseCommune = await client.GetFromJsonAsync<List<Commune>>("https://localhost:7219/api/Communes");
         listCommunes = responseCommune;
+        
+        var responseDiploma = await client.GetFromJsonAsync<List<Diploma>>("https://localhost:7219/api/Diplomas");
+        listDiplomas = responseDiploma;
 
         listEmployeesJoin = (from employee in listEmployees
                              join ethnic in listEthnics on employee.EthnicId equals ethnic.Id
@@ -138,7 +154,8 @@ else
                                     OccupationName = occupation.Name,
                                     CitizenIdentityCard = employee.CitizenIdentityCard,
                                     PhoneNumber = employee.PhoneNumber,
-                                    Address = employee.SpecificAddress + " / " + commune.Name + " / " + district.Name + " / " + city.Name
+                                    Address = employee.SpecificAddress + " / " + commune.Name + " / " + district.Name + " / " + city.Name,
+                                    DiplomaNumber = listDiplomas.Count(x => x.EmployeeId == employee.Id)
                                  }).ToList();
 
 
@@ -148,6 +165,7 @@ else
     async Task Delete(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
+
         var response = await client.DeleteAsync($"https://localhost:7219/api/Employees/{id}");
 
         await LoadData();
@@ -158,8 +176,8 @@ else
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{id}");
 
+        var response = await client.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{id}");
         listEmployees.Clear();
         listEmployees.Add(response);
     }

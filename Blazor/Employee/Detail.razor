@@ -116,12 +116,16 @@
 @code {
     List<Ethnic> listEthnics = null;
     Ethnic ethnic = new();
+
     List<Occupation> listOccupations = null;
     Occupation occupation = new();
+
     List<City> listCities = null;
     City city = new();
+
     List<District> listDistricts = null;
     District district = new();
+
     List<Commune> listCommunes = null;
     Commune commune = new();
 
@@ -129,6 +133,7 @@
     public string id { set; get; }
 
     Employee employee = new();
+
     string errorMessage = string.Empty;
     string message = string.Empty;
 
@@ -141,6 +146,7 @@
     async Task Details(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
+
         var response = await client.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{id}");
 
         employee = response;
@@ -151,14 +157,19 @@
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
+
         var responseEthnic = await client.GetFromJsonAsync<List<Ethnic>>("https://localhost:7219/api/Ethnics");
         listEthnics = responseEthnic;
+
         var responseOccupation = await client.GetFromJsonAsync<List<Occupation>>("https://localhost:7219/api/Occupations");
         listOccupations = responseOccupation;
+
         var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
         listCities = responseCity;
+
         var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
         listDistricts = responseDistrict;
+
         var responseCommune = await client.GetFromJsonAsync<List<Commune>>("https://localhost:7219/api/Communes");
         listCommunes = responseCommune;
     }
@@ -172,6 +183,7 @@
         else
         {
             var client = _httpClientFactory.CreateClient();
+
             var response = await client.PutAsJsonAsync<Employee>("https://localhost:7219/api/Employees", employee);
 
             NavigationManager.NavigateTo("/employee/index");

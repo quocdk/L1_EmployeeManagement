@@ -59,10 +59,12 @@
 @code {
     List<Employee> listEmployee = null;
     Employee employee = new();
+
     List<City> listCity = null;
     City city = new();
 
     Diploma diploma = new();
+
     string errorMessage = string.Empty;
     string message = string.Empty;
 
@@ -76,8 +78,10 @@
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
+
         var responseEmployee = await client.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees");
         listEmployee = responseEmployee;
+
         var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
         listCity = responseCity;
     }
@@ -91,7 +95,9 @@
         else
         {
             diploma.Id = Guid.NewGuid();
+
             var client = _httpClientFactory.CreateClient();
+
             var response = await client.PostAsJsonAsync<Diploma>("https://localhost:7219/api/Diplomas", diploma);
 
             errorMessage = string.Empty;

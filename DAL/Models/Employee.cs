@@ -20,7 +20,7 @@ namespace DAL.Models
         public Guid DistrictId { get; set; }
         public Guid CommuneId { get; set; }
         public string? SpecificAddress { get; set; }
-        public int? DiplomaNumber { get; set; }
+        public int DiplomaNumber { get; set; }
 
         public virtual Ethnic? Ethnic { get; set;}
         public virtual Occupation? Occupation { get; set;}

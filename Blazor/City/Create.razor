@@ -13,8 +13,8 @@
     <label class="col-sm-1 col-form-label">Tên: </label>
     <div class="col-sm-3">
         <input class="form-control" @bind=city.Name>
+        <span>@errorMessage</span>
     </div>
-    <span>@errorMessage</span>
 </div>
 <hr />
 <button class="btn btn-success" @onclick="@(() => Add())">Thêm</button>
