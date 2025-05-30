@@ -9,7 +9,7 @@
 <button class="btn btn-primary" @onclick="@(() => ReLoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
-    <div class="col-sm-4">
+    <div class="me-2 col-sm-3">
         <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=ethnic.Name>
     </div>
     <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(ethnic.Name))">Tìm kiếm</button>
@@ -103,7 +103,10 @@ else
     {
         await Task.Delay(1000);
 
-        listEthnicsSearch = listEthnics.Where(x => x.Name == name).ToList();
+        if (!string.IsNullOrEmpty(name))
+        {
+            listEthnicsSearch = listEthnics.Where(x => x.Name.ToLower().Contains(name)).ToList();
+        }
     }
 
 

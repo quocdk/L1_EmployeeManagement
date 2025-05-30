@@ -9,7 +9,7 @@
 <button class="btn btn-primary" @onclick="@(() => ReLoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
-    <div class="col-sm-3">
+    <div class="me-2 col-sm-3">
         <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=city.Name>
     </div>
     <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(city.Name))">Tìm kiếm</button>
@@ -67,10 +67,13 @@ else
     List<City> listCities = null;
     List<City> listCitiesSearch = null;
     City city = new();
+
     List<District> listDistricts = null;
     List<District> listDistrictsDelete = null;
+
     List<Commune> listCommunes = null;
     List<Commune> listCommunesDelete = null;
+
     string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -83,6 +86,7 @@ else
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
+
         var responseCommune = await client.GetFromJsonAsync<List<Commune>>("https://localhost:7219/api/Communes");
         listCommunes = responseCommune;
 
@@ -100,14 +104,17 @@ else
     async Task Delete(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
+
         var responseDeleteCity = await client.DeleteAsync($"https://localhost:7219/api/Cities/{id}");
 
         listDistrictsDelete = listDistricts.Where(x => x.CityId == id).ToList();
+
         foreach (var district in listDistrictsDelete)
         {
             var responseDeleteDistrict = await client.DeleteAsync($"https://localhost:7219/api/Districts/{district.Id}");
 
             listCommunesDelete = listCommunes.Where(x => x.DistrictId == district.Id).ToList();
+
             foreach (var commune in listCommunesDelete)
             {
                 var responseDeleteCommune = await client.DeleteAsync($"https://localhost:7219/api/Communes/{commune.Id}");
@@ -125,7 +132,10 @@ else
         //listCities.Clear();
         //listCities.Add(response);
 
-        listCitiesSearch = listCities.Where(x => x.Name == name).ToList();
+        if (!string.IsNullOrEmpty(name))
+        {
+            listCitiesSearch = listCities.Where(x => x.Name.ToLower().Contains(name)).ToList();
+        }
         //listCities.AddRange(listCitiesSearch);
     }
 

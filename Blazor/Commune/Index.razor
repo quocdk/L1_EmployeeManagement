@@ -9,14 +9,20 @@
 <button class="btn btn-primary" @onclick="@(() => ReLoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
-    <div class="col-sm-4">
-        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=commune.Name>
+    <div class="col-sm-3">
+        <input class="form-control" placeholder="Nhập xã / phường muốn tìm kiếm" @bind=commune.Name>
     </div>
-    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(commune.Name))">Tìm kiếm</button>
+    <div class="col-sm-3">
+        <input class="form-control" placeholder="Nhập quận / huyện muốn tìm kiếm" @bind=district.Name>
+    </div>
+    <div class="me-2 col-sm-3">
+        <input class="form-control" placeholder="Nhập tỉnh / thành phố muốn tìm kiếm" @bind=city.Name>
+    </div>
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(commune.Name, district.Name, city.Name))">Tìm kiếm</button>
 </div>
 
 <br />
-@if (listCommuneJoin == null && listCommuneJoinSearchByCityName == null && listCommuneJoinSearchByDistrictName == null && listCommuneJoinSearchByName == null)
+@if (listCommuneJoin == null && listCommuneJoinSearch == null )
 {
     <div class="spinner-border m-5" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -30,12 +36,13 @@ else
                 <th>Tên</th>
                 <th>Quận / Huyện</th>
                 <th>Tỉnh / Thành phố</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            @if (listCommuneJoinSearchByName != null)
+            @if (listCommuneJoinSearch != null)
             {
-                @foreach (var commune in listCommuneJoinSearchByName)
+                @foreach (var commune in listCommuneJoinSearch)
                 {
                     <tr>
                         <td>@commune.Name</td>
@@ -48,37 +55,7 @@ else
                     </tr>
                 }
             }
-            @if (listCommuneJoinSearchByDistrictName != null)
-            {
-                @foreach (var commune in listCommuneJoinSearchByDistrictName)
-                {
-                    <tr>
-                        <td>@commune.Name</td>
-                        <td>@commune.DistrictName</td>
-                        <td>@commune.CityName</td>
-                        <td>
-                            <a class="btn btn-info" href="/commune/detail/@commune.Id">Chi tiết</a>
-                            <button class="btn btn-danger" @onclick="@(() => Delete(commune.Id))">Xóa</button>
-                        </td>
-                    </tr>
-                }
-            }
-            @if (listCommuneJoinSearchByCityName != null)
-            {
-                @foreach (var commune in listCommuneJoinSearchByCityName)
-                {
-                    <tr>
-                        <td>@commune.Name</td>
-                        <td>@commune.DistrictName</td>
-                        <td>@commune.CityName</td>
-                        <td>
-                            <a class="btn btn-info" href="/commune/detail/@commune.Id">Chi tiết</a>
-                            <button class="btn btn-danger" @onclick="@(() => Delete(commune.Id))">Xóa</button>
-                        </td>
-                    </tr>
-                }
-            }
-            @if (listCommuneJoinSearchByName == null && listCommuneJoinSearchByDistrictName == null && listCommuneJoinSearchByCityName == null)
+            else
             {
                 @foreach (var commune in listCommuneJoin)
                 {
@@ -105,10 +82,13 @@ else
 @code {
     List<City> listCities = null;
     City city = new();
+
     List<District> listDistricts = null;
     District district = new();
+
     List<Commune> listCommunes = null;
     Commune commune = new();
+
     public class CommuneJoin
     {
         public Guid Id { get; set; }
@@ -117,9 +97,8 @@ else
         public string CityName { get; set; }
     }
     List<CommuneJoin> listCommuneJoin = null;
-    List<CommuneJoin> listCommuneJoinSearchByName = null;
-    List<CommuneJoin> listCommuneJoinSearchByDistrictName = null;
-    List<CommuneJoin> listCommuneJoinSearchByCityName = null;
+    List<CommuneJoin> listCommuneJoinSearch = null;
+
     string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -155,26 +134,38 @@ else
     }
     async Task ReLoadData()
     {
-        listCommuneJoinSearchByName = null;
-        listCommuneJoinSearchByDistrictName = null;
-        listCommuneJoinSearchByCityName = null;
+        listCommuneJoinSearch = null;
     }
 
     async Task Delete(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
+
         var response = await client.DeleteAsync($"https://localhost:7219/api/Communes/{id}");
 
         await LoadData();
     }
 
-    async Task Search(string name)
+    async Task Search(string communeName, string districtName, string cityName)
     {
         await Task.Delay(1000);
 
-        listCommuneJoinSearchByName = listCommuneJoin.Where(x => x.Name == name).ToList();
-        listCommuneJoinSearchByDistrictName = listCommuneJoin.Where(x => x.DistrictName == name).ToList();
-        listCommuneJoinSearchByCityName = listCommuneJoin.Where(x => x.CityName == name).ToList();
+        listCommuneJoinSearch = listCommuneJoin;
+
+        if (!string.IsNullOrEmpty(communeName))
+        {
+            listCommuneJoinSearch = listCommuneJoinSearch.Where(x => x.Name.ToLower().Contains(communeName)).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(districtName))
+        {
+            listCommuneJoinSearch = listCommuneJoinSearch.Where(x => x.DistrictName.ToLower().Contains(districtName)).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(cityName))
+        {
+            listCommuneJoinSearch = listCommuneJoinSearch.Where(x => x.CityName.ToLower().Contains(cityName)).ToList();
+        }
     }
 
 

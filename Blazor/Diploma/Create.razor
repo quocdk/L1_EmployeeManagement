@@ -14,17 +14,19 @@
     <div class="me-5 col-sm-3">
         <input class="form-control" @bind=diploma.Name>
     </div>
-    <label class="col-sm-1 col-form-label">Ngày Cấp: </label>
+</div>
+<div class="mb-3 row">
+    <label class="col-sm-1 col-form-label">Ngày cấp: </label>
     <div class="me-5 col-sm-2">
         <input type="date" class="form-control" @bind=diploma.IssueDate>
     </div>
-    <label class="col-sm-1 col-form-label">Ngày hết hạn: </label>
+    <label class="col-sm-2 col-form-label">Ngày hết hạn: </label>
     <div class="col-sm-2">
         <input type="date" class="form-control" @bind=diploma.ExpiryDate>
     </div>
 </div>
 <div class="mb-3 row">
-    <label class="col-sm-1 col-form-label">Đơn vị cấp: </label>
+    <label class="col-sm-1 col-form-label">Nơi cấp: </label>
     <div class="me-5 col-sm-3">
         <select class="form-select" @bind=diploma.CityId aria-label="Default select example">
             <option selected></option>
@@ -37,19 +39,22 @@
             }
         </select>
     </div>
-    <label class="col-sm-2 col-form-label">Nhân viên: </label>
+    <label class="col-sm-1 col-form-label">Nhân viên: </label>
     <div class="col-sm-3">
         <select class="form-select" @bind=diploma.EmployeeId aria-label="Default select example">
             <option selected></option>
             @if (listEmployee != null)
             {
-                @foreach (var employee in listEmployee)
+                @foreach (var employee in listEmployee.Where(x => x.DiplomaNumber < 3))
                 {
                     <option value="@employee.Id">@employee.FullName</option>
                 }
             }
         </select>
     </div>
+    <label class="col-sm-2 col-form-label">
+        Chỉ hiện người có dưới 3 văn bằng chưa hết hạn
+    </label>
 </div>
 <hr />
 <button class="btn btn-success" @onclick="@(() => Add())">Thêm</button>
@@ -63,6 +68,7 @@
     List<City> listCity = null;
     City city = new();
 
+    List<Diploma> listDiplomas = null;
     Diploma diploma = new();
 
     string errorMessage = string.Empty;
@@ -81,6 +87,22 @@
 
         var responseEmployee = await client.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees");
         listEmployee = responseEmployee;
+
+        var responseDiploma = await client.GetFromJsonAsync<List<Diploma>>("https://localhost:7219/api/Diplomas");
+        listDiplomas = responseDiploma;
+
+        foreach (var diploma in listDiplomas)
+        {
+            int result = DateTime.Compare(diploma.ExpiryDate, DateTime.Now);
+
+            if (result <= 0) diploma.Status = 0;
+            else diploma.Status = 1;
+        }
+
+        foreach (var employee in listEmployee)
+        {
+            employee.DiplomaNumber = listDiplomas.Where(x => x.Status == 1).Count(x => x.EmployeeId == employee.Id);
+        }
 
         var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
         listCity = responseCity;

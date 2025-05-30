@@ -9,14 +9,17 @@
 <button class="btn btn-primary" @onclick="@(() => ReLoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
-    <div class="col-sm-4">
-        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=district.Name>
+    <div class="col-sm-3">
+        <input class="form-control" placeholder="Nhập quận / huyện muốn tìm kiếm" @bind=district.Name>
     </div>
-    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(district.Name))">Tìm kiếm</button>
+    <div class="me-2 col-sm-3">
+        <input class="form-control" placeholder="Nhập tỉnh / thành phố muốn tìm kiếm" @bind=city.Name>
+    </div>
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(district.Name, city.Name))">Tìm kiếm</button>
 </div>
 
 <br />
-@if (listDistrictJoinCity == null && listDistrictJoinCitySearchByCityName == null && listDistrictJoinCitySearchByDistrictName == null)
+@if (listDistrictJoinCity == null && listDistrictJoinCitySearch == null)
 {
     <div class="spinner-border m-5" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -29,26 +32,13 @@ else
             <tr>
                 <th>Tên</th>
                 <th>Tỉnh / Thành phố</th>
+                <th></th>
             </tr>
         </thead>
-        <tbody>
-            @if (listDistrictJoinCitySearchByDistrictName != null)
+        <tbody>        
+            @if (listDistrictJoinCitySearch != null)
             {
-                @foreach (var district in listDistrictJoinCitySearchByDistrictName)
-                {
-                    <tr>
-                        <td>@district.Name</td>
-                        <td>@district.CityName</td>
-                        <td>
-                            <a class="btn btn-info" href="/district/detail/@district.Id">Chi tiết</a>
-                            <button class="btn btn-danger" @onclick="@(() => Delete(district.Id))">Xóa</button>
-                        </td>
-                    </tr>
-                }
-            } 
-            @if (listDistrictJoinCitySearchByCityName != null)
-            {
-                @foreach (var district in listDistrictJoinCitySearchByCityName)
+                @foreach (var district in listDistrictJoinCitySearch)
                 {
                     <tr>
                         <td>@district.Name</td>
@@ -60,7 +50,7 @@ else
                     </tr>
                 }
             }
-            @if(listDistrictJoinCitySearchByDistrictName == null && listDistrictJoinCitySearchByCityName == null)
+            else
             {
                 @foreach (var district in listDistrictJoinCity)
                 {
@@ -86,10 +76,13 @@ else
 @code {
     List<City> listCities = null;
     City city = new();
+
     List<District> listDistricts = null;
     District district = new();
+
     List<Commune> listCommunes = null;
     List<Commune> listCommunesDelete = null;
+
     public class DistrictJoinCity
     {
         public Guid Id { get; set; }
@@ -97,8 +90,8 @@ else
         public string CityName { get; set; }
     }
     List<DistrictJoinCity> listDistrictJoinCity = null;
-    List<DistrictJoinCity> listDistrictJoinCitySearchByDistrictName = null;
-    List<DistrictJoinCity> listDistrictJoinCitySearchByCityName = null;
+    List<DistrictJoinCity> listDistrictJoinCitySearch = null;
+
     string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -132,15 +125,16 @@ else
     }
     async Task ReLoadData()
     {
-        listDistrictJoinCitySearchByCityName = null;
-        listDistrictJoinCitySearchByDistrictName = null;
+        listDistrictJoinCitySearch = null;
     }
     async Task Delete(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
+
         var responseDeleteDistrict = await client.DeleteAsync($"https://localhost:7219/api/Districts/{id}");
 
         listCommunesDelete = listCommunes.Where(x => x.DistrictId == id).ToList();
+
         foreach (var commune in listCommunesDelete)
         {
             var responseDeleteCommune = await client.DeleteAsync($"https://localhost:7219/api/Communes/{commune.Id}");
@@ -149,12 +143,35 @@ else
         await LoadData();
     }
 
-    async Task Search(string name)
+    async Task Search(string districtName, string cityName)
     {
         await Task.Delay(1000);
 
-        listDistrictJoinCitySearchByDistrictName = listDistrictJoinCity.Where(x => x.Name == name).ToList();
-        listDistrictJoinCitySearchByCityName = listDistrictJoinCity.Where(x => x.CityName == name).ToList();
+        //if (districtName != null && cityName != null)
+        //{
+        //    listDistrictJoinCitySearch = listDistrictJoinCity.Where(x => x.Name.ToLower().Contains(districtName))
+        //                                                     .Where(x => x.CityName.ToLower().Contains(cityName)).ToList();
+        //}
+        //else if (cityName != null)
+        //{
+        //    listDistrictJoinCitySearch = listDistrictJoinCity.Where(x => x.CityName.ToLower().Contains(cityName)).ToList();
+        //}
+        //else if (districtName != null)
+        //{
+        //    listDistrictJoinCitySearch = listDistrictJoinCity.Where(x => x.Name.ToLower().Contains(districtName)).ToList();
+        //}
+        
+        listDistrictJoinCitySearch = listDistrictJoinCity;
+
+        if (!string.IsNullOrEmpty(districtName))
+        {
+            listDistrictJoinCitySearch = listDistrictJoinCitySearch.Where(x => x.Name.ToLower().Contains(districtName)).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(cityName))
+        {
+            listDistrictJoinCitySearch = listDistrictJoinCitySearch.Where(x => x.CityName.ToLower().Contains(cityName)).ToList();
+        }
     }
 
 

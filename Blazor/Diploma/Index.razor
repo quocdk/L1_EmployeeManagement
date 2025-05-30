@@ -6,17 +6,17 @@
     Danh sách Văn bằng
 </h4>
 <a class="btn btn-primary" href="diploma/create">Thêm mới</a>
-<button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
+<button class="btn btn-primary" @onclick="@(() => ReLoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
-    <div class="col-sm-4">
-        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=diploma.Id>
+    <div class="me-2 col-sm-3">
+        <input class="form-control" placeholder="Nhập tên văn bằng muốn tìm kiếm" @bind=diploma.Name>
     </div>
-    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(diploma.Id))">Tìm kiếm</button>
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(diploma.Name))">Tìm kiếm</button>
 </div>
 
 <br />
-@if (listDiplomaJoin == null)
+@if (listDiplomaJoin == null && listDiplomaJoinSearch == null)
 {
     <div class="spinner-border m-5" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -28,28 +28,51 @@ else
         <thead>
             <tr>
                 <th>Tên</th>
-                <th>Đơn vị cấp</th>
+                <th>Nơi cấp</th>
                 <th>Ngày cấp</th>
                 <th>Ngày hết hạn</th>             
+                <th>Trạng thái</th>             
                 <th>Tên nhân viên</th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var diploma in listDiplomaJoin)
+            @if (listDiplomaJoinSearch != null)
             {
-                <tr>
-                    <td>@diploma.Name</td>
-                    <td>@diploma.CityName</td>
-                    <td>@diploma.IssueDate.ToString("dd/MM/yyyy")</td>
-                    <td>@diploma.ExpiryDate.ToString("dd/MM/yyyy")</td>
-                    <td>@diploma.EmployeeName</td>
-                    <td>
-                        <a class="btn btn-info" href="/diploma/detail/@diploma.Id">Chi tiết</a>
-                        <button class="btn btn-danger" @onclick="@(() => Delete(diploma.Id))">Xóa</button>
-                    </td>
-                </tr>
+                @foreach (var diploma in listDiplomaJoinSearch)
+                {
+                    <tr>
+                        <td>@diploma.Name</td>
+                        <td>@diploma.CityName</td>
+                        <td>@diploma.IssueDate.ToString("dd/MM/yyyy")</td>
+                        <td>@diploma.ExpiryDate.ToString("dd/MM/yyyy")</td>
+                        <td>@diploma.Status</td>
+                        <td>@diploma.EmployeeName</td>
+                        <td>
+                            <a class="btn btn-info" href="/diploma/detail/@diploma.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(diploma.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
             }
+            else
+            {
+                @foreach (var diploma in listDiplomaJoin)
+                {
+                    <tr>
+                        <td>@diploma.Name</td>
+                        <td>@diploma.CityName</td>
+                        <td>@diploma.IssueDate.ToString("dd/MM/yyyy")</td>
+                        <td>@diploma.ExpiryDate.ToString("dd/MM/yyyy")</td>
+                        <td>@diploma.Status</td>
+                        <td>@diploma.EmployeeName</td>
+                        <td>
+                            <a class="btn btn-info" href="/diploma/detail/@diploma.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(diploma.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
+            }  
         </tbody>
     </table>
 
@@ -61,6 +84,7 @@ else
 
     List<Employee> listEmployee = null;
     Employee employee = new();
+
     List<City> listCity = null;
     City city = new();
 
@@ -70,10 +94,13 @@ else
         public string Name { get; set; }
         public DateTime IssueDate { get; set; }
         public DateTime ExpiryDate { get; set; }
+        public string Status { get; set; }
         public string CityName { get; set; }
         public string EmployeeName { get; set; }
     }
     List<DiplomaJoin> listDiplomaJoin = null;
+    List<DiplomaJoin> listDiplomaJoinSearch = null;
+
     string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -90,12 +117,19 @@ else
         var responseDiploma = await client.GetFromJsonAsync<List<Diploma>>("https://localhost:7219/api/Diplomas");
         listDiploma = responseDiploma;
 
+        foreach (var diploma in listDiploma)
+        {
+            int result = DateTime.Compare(diploma.ExpiryDate, DateTime.Now);
+
+            if (result <= 0) diploma.Status = 0;
+            else diploma.Status = 1;
+        }
+
         var responseEmployee = await client.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees");
         listEmployee = responseEmployee;
+
         var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
         listCity = responseCity;
-
-        
 
         listDiplomaJoin = (from diploma in listDiploma
                              join employee in listEmployee on diploma.EmployeeId equals employee.Id
@@ -106,6 +140,7 @@ else
                                      Name = diploma.Name,
                                      IssueDate = diploma.IssueDate,
                                      ExpiryDate = diploma.ExpiryDate,
+                                     Status = diploma.Status == 0 ? "Đã hết hạn" : "Chưa hết hạn",
                                      EmployeeName = employee.FullName,
                                      CityName = city.Name                             
                                  }).ToList();
@@ -114,23 +149,28 @@ else
         errorMessage = string.Empty;
     }
 
+    async Task ReLoadData()
+    {
+        listDiplomaJoinSearch = null;
+    }
+
     async Task Delete(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
+
         var response = await client.DeleteAsync($"https://localhost:7219/api/Diplomas/{id}");
 
         await LoadData();
     }
 
-    async Task Search(Guid id)
+    async Task Search(string name)
     {
         await Task.Delay(1000);
 
-        var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<Diploma>($"https://localhost:7219/api/Diplomas/{id}");
-
-        listDiploma.Clear();
-        listDiploma.Add(response);
+        if (!string.IsNullOrEmpty(name))
+        {
+            listDiplomaJoinSearch = listDiplomaJoin.Where(x => x.Name.ToLower().Contains(name)).ToList();
+        }
     }
 
 

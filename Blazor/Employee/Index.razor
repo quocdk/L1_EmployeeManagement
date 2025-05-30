@@ -6,17 +6,17 @@
     Danh sách Nhân viên
 </h4>
 <a class="btn btn-primary" href="employee/create">Thêm mới</a>
-<button class="btn btn-primary" @onclick="@(() => LoadData())">Tải lại danh sách</button>
+<button class="btn btn-primary" @onclick="@(() => ReLoadData())">Tải lại danh sách</button>
 <hr />
 <div class="mb-3 row">
-    <div class="col-sm-4">
-        <input class="form-control" placeholder="Nhập tên muốn tìm kiếm" @bind=employee.Id>
+    <div class="me-2 col-sm-3">
+        <input class="form-control" placeholder="Nhập họ tên nhân viên muốn tìm kiếm" @bind=employee.FullName>
     </div>
-    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(employee.Id))">Tìm kiếm</button>
+    <button class="col-sm-1 btn btn-success" @onclick="@(() => Search(employee.FullName))">Tìm kiếm</button>
 </div>
 
 <br />
-@if (listEmployeesJoin == null)
+@if (listEmployeesJoin == null && listEmployeesJoinSearch == null)
 {
     <div class="spinner-border m-5" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -27,7 +27,7 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Tên</th>
+                <th>Họ tên</th>
                 <th>Ngày sinh</th>
                 <th>Tuổi</th>
                 <th>Dân tộc</th>
@@ -40,32 +40,52 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var employee in listEmployeesJoin)
+            @if (listEmployeesJoinSearch != null)
             {
-                <tr>
-                    @* <td>@(listCities.IndexOf(city) +1)</td> *@
-                    <td>@employee.FullName</td>
-                    <td>@employee.DateOfBirth.ToString("dd/MM/yyyy")</td>
-                    <td>@employee.Age</td>
-                    <td>@employee.EthnicName</td>
-                    <td>@employee.OccupationName</td>
-                    <td>@employee.CitizenIdentityCard</td>
-                    <td>@employee.PhoneNumber</td>
-                    <td>@employee.Address</td>
-                    <td>@employee.DiplomaNumber</td>
-                    <td>
-                        <a class="btn btn-info" href="/employee/detail/@employee.Id">Chi tiết</a>
-                        <button class="btn btn-danger" @onclick="@(() => Delete(employee.Id))">Xóa</button>
-                    </td>
-                </tr>
+                @foreach (var employee in listEmployeesJoinSearch)
+                {
+                    <tr>
+                        <td>@employee.FullName</td>
+                        <td>@employee.DateOfBirth.ToString("dd/MM/yyyy")</td>
+                        <td>@employee.Age</td>
+                        <td>@employee.EthnicName</td>
+                        <td>@employee.OccupationName</td>
+                        <td>@employee.CitizenIdentityCard</td>
+                        <td>@employee.PhoneNumber</td>
+                        <td>@employee.Address</td>
+                        <td>@employee.DiplomaNumber</td>
+                        <td>
+                            <a class="btn btn-info" href="/employee/detail/@employee.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(employee.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
             }
+            else
+            {
+                @foreach (var employee in listEmployeesJoin)
+                {
+                    <tr>
+                        <td>@employee.FullName</td>
+                        <td>@employee.DateOfBirth.ToString("dd/MM/yyyy")</td>
+                        <td>@employee.Age</td>
+                        <td>@employee.EthnicName</td>
+                        <td>@employee.OccupationName</td>
+                        <td>@employee.CitizenIdentityCard</td>
+                        <td>@employee.PhoneNumber</td>
+                        <td>@employee.Address</td>
+                        <td>@employee.DiplomaNumber</td>
+                        <td>
+                            <a class="btn btn-info" href="/employee/detail/@employee.Id">Chi tiết</a>
+                            <button class="btn btn-danger" @onclick="@(() => Delete(employee.Id))">Xóa</button>
+                        </td>
+                    </tr>
+                }
+            } 
         </tbody>
     </table>
 
 }
-
-<span>@errorMessage</span>
-
 
 @code {
     List<Employee> listEmployees = null;
@@ -103,6 +123,7 @@ else
         public int DiplomaNumber { get; set; }
     }
     List<EmployeeJoin> listEmployeesJoin = null;
+    List<EmployeeJoin> listEmployeesJoinSearch = null;
 
     string errorMessage = string.Empty;
 
@@ -162,6 +183,11 @@ else
         errorMessage = string.Empty;
     }
 
+    async Task ReLoadData()
+    {
+        listEmployeesJoinSearch = null;
+    }
+
     async Task Delete(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
@@ -171,15 +197,14 @@ else
         await LoadData();
     }
 
-    async Task Search(Guid id)
+    async Task Search(string fullName)
     {
         await Task.Delay(1000);
-
-        var client = _httpClientFactory.CreateClient();
-
-        var response = await client.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{id}");
-        listEmployees.Clear();
-        listEmployees.Add(response);
+       
+        if (!string.IsNullOrEmpty(fullName))
+        {
+            listEmployeesJoinSearch = listEmployeesJoin.Where(x => x.FullName.ToLower().Contains(fullName)).ToList();
+        }
     }
 
 

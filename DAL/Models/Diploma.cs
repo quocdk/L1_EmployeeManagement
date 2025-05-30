@@ -12,6 +12,7 @@ namespace DAL.Models
         public string Name { get; set; }
         public DateTime IssueDate { get; set; }
         public DateTime ExpiryDate { get; set; }
+        public int Status { get; set; }
         public Guid CityId { get; set; } 
         public Guid EmployeeId { get; set; } 
 
