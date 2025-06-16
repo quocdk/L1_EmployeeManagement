@@ -90,12 +90,14 @@ namespace DAL.ApplicationDbContext
                     Id = Guid.Parse("c7b4e2be-4902-498f-954b-e35ebb7be2aa"),
                     Name = "Tân Lập",
                     DistrictId = Guid.Parse("8df1f290-ed39-43d9-9f86-76eb7570bbe6"),
+                    CityId = Guid.Parse("a0191258-172c-42ea-81b9-c71cd98b047b")
                 },
                 new Commune()
                 {
                     Id = Guid.Parse("0d118c45-451d-4be9-aea5-21e727a4e68c"),
                     Name = "Tân Hội",
                     DistrictId = Guid.Parse("8df1f290-ed39-43d9-9f86-76eb7570bbe6"),
+                    CityId = Guid.Parse("a0191258-172c-42ea-81b9-c71cd98b047b")
                 }
                 );
 
@@ -165,6 +167,7 @@ namespace DAL.ApplicationDbContext
                     Name = "Văn bằng 1",
                     IssueDate = DateTime.Parse("11/11/2021"),
                     ExpiryDate = DateTime.Parse("11/11/2022"),
+                    Status = 0,
                     CityId = Guid.Parse("a0191258-172c-42ea-81b9-c71cd98b047b"),
                     EmployeeId = Guid.Parse("db3fc518-b1f8-4694-ab71-b5657c6a663a"),
                 },
@@ -174,6 +177,7 @@ namespace DAL.ApplicationDbContext
                     Name = "Văn bằng 2",
                     IssueDate = DateTime.Parse("11/11/2023"),
                     ExpiryDate = DateTime.Parse("11/11/2024"),
+                    Status = 0,
                     CityId = Guid.Parse("a0191258-172c-42ea-81b9-c71cd98b047b"),
                     EmployeeId = Guid.Parse("1e35b504-4a19-429a-9fe9-a14151e6ebd5"),
                 }

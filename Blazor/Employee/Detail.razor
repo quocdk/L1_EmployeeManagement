@@ -64,8 +64,8 @@
 <div class="mb-3 row">
     <label class="col-sm-2 col-form-label">Tỉnh / Thành phố: </label>
     <div class="me-5 col-sm-3">
-        <select class="form-select" @bind=employee.CityId aria-label="Default select example">
-            <option selected></option>
+        <select class="form-select" value="@employee.CityId" @onchange="OnCityChanged" aria-label="Default select example">
+            <option selected disabled></option>
             @if (listCities != null)
             {
                 @foreach (var city in listCities)
@@ -77,11 +77,11 @@
     </div>
     <label class="col-sm-2 col-form-label">Quận / Huyện: </label>
     <div class="col-sm-3">
-        <select class="form-select" @bind=employee.DistrictId aria-label="Default select example">
-            <option selected></option>
-            @if (listDistricts != null)
+        <select class="form-select" value="@employee.DistrictId" @onchange="OnDistrictChanged" aria-label="Default select example">
+            <option selected disabled></option>
+            @if (listDistrictsByCityId != null)
             {
-                @foreach (var district in listDistricts)
+                @foreach (var district in listDistrictsByCityId)
                 {
                     <option value="@district.Id">@district.Name</option>
                 }
@@ -94,9 +94,9 @@
     <div class="me-5 col-sm-3">
         <select class="form-select" @bind=employee.CommuneId aria-label="Default select example">
             <option selected></option>
-            @if (listCommunes != null)
+            @if (listCommunesByDistrictId != null)
             {
-                @foreach (var commune in listCommunes)
+                @foreach (var commune in listCommunesByDistrictId)
                 {
                     <option value="@commune.Id">@commune.Name</option>
                 }
@@ -124,9 +124,11 @@
     City city = new();
 
     List<District> listDistricts = null;
+    List<District> listDistrictsByCityId = null;
     District district = new();
 
     List<Commune> listCommunes = null;
+    List<Commune> listCommunesByDistrictId = null;
     Commune commune = new();
 
     [Parameter]
@@ -139,8 +141,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await Details(Guid.Parse(id));
         await LoadData();
+        await Details(Guid.Parse(id));
+        await LoadDistrictsByCityId(employee.CityId);
+        await LoadCommunesByDistrictId(employee.DistrictId);
     }
 
     async Task Details(Guid id)
@@ -148,7 +152,6 @@
         var client = _httpClientFactory.CreateClient();
 
         var response = await client.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{id}");
-
         employee = response;
     }
 
@@ -172,6 +175,33 @@
 
         var responseCommune = await client.GetFromJsonAsync<List<Commune>>("https://localhost:7219/api/Communes");
         listCommunes = responseCommune;
+    }
+
+    async Task OnCityChanged(ChangeEventArgs e)
+    {
+        var selectedCityId = Guid.Parse(e.Value.ToString());
+        employee.CityId = selectedCityId;
+        //listCommunesByDistrictId = null;
+
+        await LoadDistrictsByCityId(selectedCityId);
+    }
+
+    async Task LoadDistrictsByCityId(Guid id)
+    {
+        listDistrictsByCityId = listDistricts.Where(x => x.CityId == id).ToList();
+    }
+
+    async Task OnDistrictChanged(ChangeEventArgs e)
+    {
+        var selectedDistrictId = Guid.Parse(e.Value.ToString());
+        employee.DistrictId = selectedDistrictId;
+
+        await LoadCommunesByDistrictId(selectedDistrictId);
+    }
+
+    async Task LoadCommunesByDistrictId(Guid id)
+    {
+        listCommunesByDistrictId = listCommunes.Where(x => x.DistrictId == id).ToList();
     }
 
     async Task Update()

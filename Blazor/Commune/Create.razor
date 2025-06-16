@@ -21,7 +21,7 @@
     <div class="me-5 col-sm-3">
         <select class="form-select" @onchange="OnCityChanged" aria-label="Default select example">
             <option selected disabled></option>
-            @if (listDistricts != null)
+            @if (listCities != null)
             {
                 @foreach (var city in listCities)
                 {
@@ -51,10 +51,13 @@
 @code {
     List<City> listCities = null;
     City city = new();
+
     List<District> listDistricts = null;
     List<District> listDistrictsByCityId = null;
     District district = new();
+
     Commune commune = new();
+
     string errorMessage = string.Empty;
     string message = string.Empty;
 
@@ -78,9 +81,11 @@
     async Task OnCityChanged(ChangeEventArgs e)
     {
         var selectedCityId = Guid.Parse(e.Value.ToString());
+        commune.CityId = selectedCityId;
 
         await LoadDistrictsByCityId(selectedCityId);
     }
+
     async Task LoadDistrictsByCityId(Guid id)
     {
         listDistrictsByCityId = listDistricts.Where(x => x.CityId == id).ToList();

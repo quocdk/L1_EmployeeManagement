@@ -17,49 +17,66 @@
     <span>@errorMessage</span>
 </div>
 <div class="mb-3 row">
+    <label class="col-sm-2 col-form-label">Tỉnh / Thành phố: </label>
+    <div class="me-5 col-sm-3">
+        <select class="form-select" value="@commune.CityId" @onchange="OnCityChanged" aria-label="Default select example">
+            <option selected disabled></option>
+            @if (listCities != null)
+            {
+                @foreach (var city in listCities)
+                {
+                    <option value="@city.Id">@city.Name</option>
+                }
+            }
+        </select>
+    </div>
     <label class="col-sm-2 col-form-label">Quận / Huyện: </label>
     <div class="col-sm-3">
         <select class="form-select" @bind=commune.DistrictId aria-label="Default select example">
-            <option selected>Open this select menu</option>
-            @if (listDistricts != null)
+            <option selected disabled></option>
+            @if (listDistrictsByCityId != null)
             {
-                @foreach (var district in listDistricts)
+                @foreach (var district in listDistrictsByCityId)
                 {
                     <option value="@district.Id">@district.Name</option>
                 }
             }
         </select>
     </div>
-    <span>@errorMessage</span>
 </div>
 <hr />
 <button class="btn btn-success" @onclick="@(() => Update())">Sửa</button>
-<span>@message</span>
 
 
 @code {
+    List<City> listCities = null;
+    City city = new();
+
     List<District> listDistricts = null;
+    List<District> listDistrictsByCityId = null;
     District district = new();
 
     [Parameter]
     public string id { set; get; }
 
     Commune commune = new();
+
     string errorMessage = string.Empty;
     string message = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        await Details(Guid.Parse(id));
         await LoadData();
+        await Details(Guid.Parse(id));
+        await LoadDistrictsByCityId(commune.CityId);
     }
 
     async Task Details(Guid id)
     {
         var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<Commune>($"https://localhost:7219/api/Communes/{id}");
 
-        commune = response;
+        var responseCommune = await client.GetFromJsonAsync<Commune>($"https://localhost:7219/api/Communes/{id}");
+        commune = responseCommune;
     }
 
     async Task LoadData()
@@ -67,9 +84,25 @@
         await Task.Delay(1000);
 
         var client = _httpClientFactory.CreateClient();
-        var response = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
 
-        listDistricts = response;
+        var responseDistrict = await client.GetFromJsonAsync<List<District>>("https://localhost:7219/api/Districts");
+        listDistricts = responseDistrict;
+
+        var responseCity = await client.GetFromJsonAsync<List<City>>("https://localhost:7219/api/Cities");
+        listCities = responseCity;
+    }
+
+    async Task OnCityChanged(ChangeEventArgs e)
+    {
+        var selectedCityId = Guid.Parse(e.Value.ToString());
+        commune.CityId = selectedCityId;
+
+        await LoadDistrictsByCityId(selectedCityId);
+    }
+
+    async Task LoadDistrictsByCityId(Guid id)
+    {
+        listDistrictsByCityId = listDistricts.Where(x => x.CityId == id).ToList();
     }
 
     async Task Update()
@@ -84,7 +117,6 @@
             var response = await client.PutAsJsonAsync<Commune>("https://localhost:7219/api/Communes", commune);
 
             NavigationManager.NavigateTo("/commune/index");
-
         }
     }
 }

@@ -10,6 +10,7 @@ namespace DAL.Models
     {
         public Guid Id { get; set; }
         public Guid DistrictId { get; set; }
+        public Guid CityId { get; set; }
         public string Name { get; set; }
 
         public virtual District? District { get; set; }  
