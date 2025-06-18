@@ -17,8 +17,8 @@ namespace DAL.Models
         public string? CitizenIdentityCard { get; set; }
         public string? PhoneNumber { get; set; }
         public Guid CityId { get; set; }
-        public Guid DistrictId { get; set; }
-        public Guid CommuneId { get; set; }
+        public Guid? DistrictId { get; set; }
+        public Guid? CommuneId { get; set; }
         public string? SpecificAddress { get; set; }
         public int DiplomaNumber { get; set; }
 

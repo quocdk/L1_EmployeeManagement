@@ -64,6 +64,11 @@ namespace DAL.ApplicationDbContext
                 },
                 new City()
                 {
+                    Id = Guid.Parse("5fc2aa7d-1771-45b8-81ad-aba0d995b120"),
+                    Name = "Hà Giang"
+                },
+                new City()
+                {
                     Id = Guid.Parse("d9ccef94-ba5e-4746-9150-c7ffa4492d6d"),
                     Name = "Thái Bình"
                 }
@@ -75,6 +80,12 @@ namespace DAL.ApplicationDbContext
                     Id = Guid.Parse("8df1f290-ed39-43d9-9f86-76eb7570bbe6"),
                     Name = "Đan Phượng",
                     CityId = Guid.Parse("a0191258-172c-42ea-81b9-c71cd98b047b"),
+                },
+                new District()
+                {
+                    Id = Guid.Parse("496336ec-0f4a-410b-82e2-625208c1f0b3"),
+                    Name = "Quỳnh Phụ",
+                    CityId = Guid.Parse("d9ccef94-ba5e-4746-9150-c7ffa4492d6d"),
                 },
                 new District()
                 {
@@ -90,6 +101,27 @@ namespace DAL.ApplicationDbContext
                     Id = Guid.Parse("c7b4e2be-4902-498f-954b-e35ebb7be2aa"),
                     Name = "Tân Lập",
                     DistrictId = Guid.Parse("8df1f290-ed39-43d9-9f86-76eb7570bbe6"),
+                    CityId = Guid.Parse("a0191258-172c-42ea-81b9-c71cd98b047b")
+                },
+                new Commune()
+                {
+                    Id = Guid.Parse("dbd939af-c9b8-4788-8f9d-2fcf19cf665c"),
+                    Name = "Đông Hải",
+                    DistrictId = Guid.Parse("496336ec-0f4a-410b-82e2-625208c1f0b3"),
+                    CityId = Guid.Parse("d9ccef94-ba5e-4746-9150-c7ffa4492d6d")
+                },
+                new Commune()
+                {
+                    Id = Guid.Parse("f022b473-75f7-472f-bd13-71039dd7dd71"),
+                    Name = "An Vinh",
+                    DistrictId = Guid.Parse("496336ec-0f4a-410b-82e2-625208c1f0b3"),
+                    CityId = Guid.Parse("d9ccef94-ba5e-4746-9150-c7ffa4492d6d")
+                },
+                new Commune()
+                {
+                    Id = Guid.Parse("cb19b7d0-43bc-47f5-a48f-9896a13ce361"),
+                    Name = "Sơn Đồng",
+                    DistrictId = Guid.Parse("48868dd6-6ef9-4d85-ab33-3e68369f3542"),
                     CityId = Guid.Parse("a0191258-172c-42ea-81b9-c71cd98b047b")
                 },
                 new Commune()

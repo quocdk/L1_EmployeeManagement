@@ -9,7 +9,7 @@ namespace DAL.Models
     public class Commune
     {
         public Guid Id { get; set; }
-        public Guid DistrictId { get; set; }
+        public Guid? DistrictId { get; set; }
         public Guid CityId { get; set; }
         public string Name { get; set; }
 

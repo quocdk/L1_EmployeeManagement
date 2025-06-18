@@ -105,7 +105,7 @@ else
 
     List<Commune> listCommunes = null;
     Commune commune = new();
-    
+
     List<Diploma> listDiplomas = null;
     Diploma diploma = new();
 
@@ -141,6 +141,11 @@ else
         var responseEmployee = await client.GetFromJsonAsync<List<Employee>>("https://localhost:7219/api/Employees");
         listEmployees = responseEmployee;
 
+        foreach (var employee in listEmployees)
+        {
+            employee.Age = DateTime.Now.Year - employee.DateOfBirth.Year;
+        }
+
         var responseEthnic = await client.GetFromJsonAsync<List<Ethnic>>("https://localhost:7219/api/Ethnics");
         listEthnics = responseEthnic;
 
@@ -155,7 +160,7 @@ else
 
         var responseCommune = await client.GetFromJsonAsync<List<Commune>>("https://localhost:7219/api/Communes");
         listCommunes = responseCommune;
-        
+
         var responseDiploma = await client.GetFromJsonAsync<List<Diploma>>("https://localhost:7219/api/Diplomas");
         listDiplomas = responseDiploma;
 

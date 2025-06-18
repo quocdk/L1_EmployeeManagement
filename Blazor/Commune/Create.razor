@@ -20,7 +20,7 @@
     <label class="col-sm-2 col-form-label">Tỉnh / Thành phố: </label>
     <div class="me-5 col-sm-3">
         <select class="form-select" @onchange="OnCityChanged" aria-label="Default select example">
-            <option selected disabled></option>
+            <option value="" selected></option>
             @if (listCities != null)
             {
                 @foreach (var city in listCities)
@@ -80,10 +80,19 @@
     }
     async Task OnCityChanged(ChangeEventArgs e)
     {
-        var selectedCityId = Guid.Parse(e.Value.ToString());
-        commune.CityId = selectedCityId;
+        if (e.Value.ToString() == "")
+        {
+            listDistrictsByCityId = null;
+        }
+        else
+        {
+            var selectedCityId = Guid.Parse(e.Value.ToString());
+            commune.CityId = selectedCityId;
 
-        await LoadDistrictsByCityId(selectedCityId);
+            await LoadDistrictsByCityId(selectedCityId);
+
+            commune.DistrictId = null;
+        }        
     }
 
     async Task LoadDistrictsByCityId(Guid id)

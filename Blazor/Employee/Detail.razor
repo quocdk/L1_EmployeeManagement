@@ -16,11 +16,11 @@
     </div>  
     <label class="col-sm-1 col-form-label">Ngày sinh: </label>
     <div class="me-5 col-sm-2">
-        <input type="date" class="form-control" @bind=employee.DateOfBirth>
+        <input type="date" class="form-control" value="@employee.DateOfBirth.ToString("yyyy-MM-dd")" @onchange="OnDateOfBirthChanged">
     </div>
     <label class="col-sm-1 col-form-label">Tuổi: </label>
     <div class="col-sm-1">
-        <input class="form-control" @bind=employee.Age>
+        <input class="form-control" @bind=employee.Age disabled>
     </div>
 </div>
 <div class="mb-3 row">
@@ -65,7 +65,7 @@
     <label class="col-sm-2 col-form-label">Tỉnh / Thành phố: </label>
     <div class="me-5 col-sm-3">
         <select class="form-select" value="@employee.CityId" @onchange="OnCityChanged" aria-label="Default select example">
-            <option selected disabled></option>
+            <option value="" selected></option>
             @if (listCities != null)
             {
                 @foreach (var city in listCities)
@@ -78,7 +78,7 @@
     <label class="col-sm-2 col-form-label">Quận / Huyện: </label>
     <div class="col-sm-3">
         <select class="form-select" value="@employee.DistrictId" @onchange="OnDistrictChanged" aria-label="Default select example">
-            <option selected disabled></option>
+            <option value="" selected></option>
             @if (listDistrictsByCityId != null)
             {
                 @foreach (var district in listDistrictsByCityId)
@@ -153,6 +153,9 @@
 
         var response = await client.GetFromJsonAsync<Employee>($"https://localhost:7219/api/Employees/{id}");
         employee = response;
+
+        employee.Age = DateTime.Now.Year - employee.DateOfBirth.Year;
+
     }
 
     async Task LoadData()
@@ -177,13 +180,32 @@
         listCommunes = responseCommune;
     }
 
+    async Task OnDateOfBirthChanged(ChangeEventArgs e)
+    {
+        var selectedDateOfBirth = DateTime.Parse(e.Value.ToString());
+
+        employee.DateOfBirth = selectedDateOfBirth;
+        employee.Age = DateTime.Now.Year - selectedDateOfBirth.Year;
+    }
+
     async Task OnCityChanged(ChangeEventArgs e)
     {
-        var selectedCityId = Guid.Parse(e.Value.ToString());
-        employee.CityId = selectedCityId;
-        //listCommunesByDistrictId = null;
+        if (e.Value.ToString() == "")
+        {
+            listDistrictsByCityId = null;
+            listCommunesByDistrictId = null;
+        }
+        else
+        {
+            var selectedCityId = Guid.Parse(e.Value.ToString());
+            employee.CityId = selectedCityId;
 
-        await LoadDistrictsByCityId(selectedCityId);
+            await LoadDistrictsByCityId(selectedCityId);
+
+            employee.DistrictId = null;
+            listCommunesByDistrictId = null;
+        }
+
     }
 
     async Task LoadDistrictsByCityId(Guid id)
@@ -193,13 +215,23 @@
 
     async Task OnDistrictChanged(ChangeEventArgs e)
     {
-        var selectedDistrictId = Guid.Parse(e.Value.ToString());
-        employee.DistrictId = selectedDistrictId;
+        if (e.Value.ToString() == "")
+        {
+            listCommunesByDistrictId = null;
+        }
+        else
+        {
+            var selectedDistrictId = Guid.Parse(e.Value.ToString());
+            employee.DistrictId = selectedDistrictId;
 
-        await LoadCommunesByDistrictId(selectedDistrictId);
+            await LoadCommunesByDistrictId(selectedDistrictId);
+
+            employee.CommuneId = null;
+        }
+        
     }
 
-    async Task LoadCommunesByDistrictId(Guid id)
+    async Task LoadCommunesByDistrictId(Guid? id)
     {
         listCommunesByDistrictId = listCommunes.Where(x => x.DistrictId == id).ToList();
     }
